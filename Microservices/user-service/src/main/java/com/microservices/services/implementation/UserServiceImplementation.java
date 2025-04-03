@@ -1,9 +1,12 @@
 package com.microservices.services.implementation;
+import com.microservices.dto.RegisterRequest;
 import com.microservices.exception.UserException;
 import com.microservices.model.User;
 import com.microservices.repository.UserRepository;
 import com.microservices.services.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -14,9 +17,21 @@ public class UserServiceImplementation implements UserService {
 
     private final UserRepository userRep;
 
-    @Override
-    public User createUser(User user) {
-        return userRep.save(user);
+    private PasswordEncoder passwordEncoder;
+
+    public String createUser(RegisterRequest request) {
+        if (userRep.findByEmail(request.getEmail()).isPresent()) {
+            return "User with this email already exists!";
+        }
+
+        User user = new User();
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(request.getRole());
+        userRep.save(user);
+        return "User registered successfully!";
     }
 
     @Override

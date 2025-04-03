@@ -1,9 +1,6 @@
 package com.microservices.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +20,18 @@ public class User {
      private String email;
      private String phone;
      private String role;
+     private String password;
      private LocalDateTime createdAt;
      private LocalDateTime updatedAt;
+
+     @PrePersist
+     public void onCreate() {
+          createdAt = LocalDateTime.now();
+          updatedAt = LocalDateTime.now();
+     }
+
+     @PreUpdate
+     public void onUpdate() {
+          updatedAt = LocalDateTime.now();
+     }
 }
