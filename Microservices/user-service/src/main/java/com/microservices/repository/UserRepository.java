@@ -7,10 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
-    // Correct the method to search by fullName containing the provided string
     List<User> findByFullNameContaining(String name);
     Optional<User> findByEmail(String email);
-    // Alternatively, you can create other methods for email or phone
     List<User> findByEmailContaining(String email);
     List<User> findByPhoneContaining(String phone);
 }

@@ -1,4 +1,7 @@
 package com.microservices.controllers;
+import com.microservices.dto.AuthResponse;
+import com.microservices.dto.LoginRequest;
+import com.microservices.dto.RegisterRequest;
 import com.microservices.exception.UserException;
 import com.microservices.model.User;
 import com.microservices.services.UserService;
@@ -15,10 +18,16 @@ public class UserController {
 
     private final UserService userSer;
 
-    @PostMapping()
-    public ResponseEntity<User> createUser(@RequestBody User user){
-        User newUser = userSer.createUser(user);
-        return new ResponseEntity<>(newUser, HttpStatus.CREATED);
+    @PostMapping("/register")
+    public ResponseEntity<String> createUser(@RequestBody RegisterRequest user){
+        String newUser = userSer.createUser(user);
+        return ResponseEntity.ok(newUser);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> loginUser(@RequestBody LoginRequest req){
+        AuthResponse newRes = userSer.loginUser(req);
+        return ResponseEntity.ok(newRes);
     }
 
     @GetMapping()
@@ -27,7 +36,7 @@ public class UserController {
         return new ResponseEntity<>(users,HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("id/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) throws UserException {
         User user = userSer.getUserById(id);
         return new ResponseEntity<>(user, HttpStatus.OK);

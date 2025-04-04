@@ -1,4 +1,5 @@
 package com.microservices.services.implementation;
+import com.microservices.config.JwtUtil;
 import com.microservices.dto.AuthResponse;
 import com.microservices.dto.LoginRequest;
 import com.microservices.dto.RegisterRequest;
@@ -19,7 +20,7 @@ public class UserServiceImplementation implements UserService {
 
     private final UserRepository userRep;
 
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public String createUser(RegisterRequest request) {
         if (userRep.findByEmail(request.getEmail()).isPresent()) {
@@ -42,7 +43,8 @@ public class UserServiceImplementation implements UserService {
         if(userOpt.isPresent()){
             User user = userOpt.get();
             if(passwordEncoder.matches(req.getPassword(), user.getPassword())){
-                return null;
+                String token = JwtUtil.generateToken(user.getEmail());
+                return new AuthResponse(token);
             }
         }
         throw new RuntimeException("Invalid email or password");
