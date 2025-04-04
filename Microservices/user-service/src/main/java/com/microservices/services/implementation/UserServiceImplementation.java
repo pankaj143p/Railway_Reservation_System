@@ -1,4 +1,6 @@
 package com.microservices.services.implementation;
+import com.microservices.dto.AuthResponse;
+import com.microservices.dto.LoginRequest;
 import com.microservices.dto.RegisterRequest;
 import com.microservices.exception.UserException;
 import com.microservices.model.User;
@@ -33,6 +35,19 @@ public class UserServiceImplementation implements UserService {
         userRep.save(user);
         return "User registered successfully!";
     }
+
+    @Override
+    public AuthResponse loginUser(LoginRequest req) {
+        Optional<User> userOpt = userRep.findByEmail(req.getEmail());
+        if(userOpt.isPresent()){
+            User user = userOpt.get();
+            if(passwordEncoder.matches(req.getPassword(), user.getPassword())){
+                return null;
+            }
+        }
+        throw new RuntimeException("Invalid email or password");
+    }
+
 
     @Override
     public User getUserById(Long id) throws UserException {
