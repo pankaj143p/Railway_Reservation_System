@@ -6,6 +6,8 @@ import com.microservices.service.TrainServie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class TrainImplementation implements TrainServie {
@@ -30,5 +32,10 @@ public class TrainImplementation implements TrainServie {
     public String updateTrain(TrainDetails train, Long train_id) {
 
         return "";
+    }
+
+    @Override
+    public List<TrainDetails> getAllTrains() {
+        return trainRepository.findAll();
     }
 }
