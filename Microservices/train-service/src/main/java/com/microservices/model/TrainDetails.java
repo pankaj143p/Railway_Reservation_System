@@ -1,20 +1,18 @@
 package com.microservices.model;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+
+import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
 import java.time.LocalTime;
 import java.util.List;
 @Data
-public class TrainModel {
+@Entity
+public class TrainDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private String trainId;
+    private Long trainId;
 
     @Column(nullable = false)
-    private String tainName;
+    private String trainName;
 
     @Column(nullable = false)
     private String source;

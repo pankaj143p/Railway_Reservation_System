@@ -1,6 +1,3 @@
-
-
-
 package com.microservices.config;
 
 import io.jsonwebtoken.*;
