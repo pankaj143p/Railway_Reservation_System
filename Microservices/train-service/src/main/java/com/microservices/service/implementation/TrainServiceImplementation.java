@@ -2,7 +2,7 @@ package com.microservices.service.implementation;
 
 import com.microservices.model.TrainDetails;
 import com.microservices.repository.TrainRepository;
-import com.microservices.service.TrainServie;
+import com.microservices.service.TrainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +10,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class TrainImplementation implements TrainServie {
+public class TrainServiceImplementation implements TrainService {
 
     private final TrainRepository trainRepository;
 
@@ -26,12 +26,6 @@ public class TrainImplementation implements TrainServie {
         train.setDepartureTime(req.getDepartureTime());
         trainRepository.save(train);
         return "Train added successfully";
-    }
-
-    @Override
-    public String updateTrain(TrainDetails train, Long train_id) {
-
-        return "";
     }
 
     @Override

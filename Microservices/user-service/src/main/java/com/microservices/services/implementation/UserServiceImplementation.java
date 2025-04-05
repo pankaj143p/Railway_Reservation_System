@@ -8,7 +8,6 @@ import com.microservices.model.User;
 import com.microservices.repository.UserRepository;
 import com.microservices.services.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
