@@ -1,12 +1,17 @@
 package com.microservices.service.implementation;
 
+import com.microservices.exception.TrainException;
+import com.microservices.exception.UserException;
 import com.microservices.model.TrainDetails;
+import com.microservices.model.User;
 import com.microservices.repository.TrainRepository;
 import com.microservices.service.TrainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,5 +36,76 @@ public class TrainServiceImplementation implements TrainService {
     @Override
     public List<TrainDetails> getAllTrains() {
         return trainRepository.findAll();
+    }
+
+    @Override
+    public List<TrainDetails> searchTrains(String keyword) {
+        return trainRepository.findBytrainNameStartingWithIgnoreCase(keyword);
+    }
+
+    @Override
+    public TrainDetails updateTrain(Long id, TrainDetails req) throws TrainException {
+        Optional<TrainDetails> opt = trainRepository.findById(id);
+        if(opt.isEmpty()){
+            throw new TrainException("train not exist with : "+id);
+
+        }
+        TrainDetails exTrain = opt.get();
+        exTrain.setTrainName(req.getTrainName());
+        exTrain.setTotalSeats(req.getTotalSeats());
+        exTrain.setDestination(req.getDestination());
+        exTrain.setSource(req.getSource());
+        exTrain.setRoutes(req.getRoutes());
+        exTrain.setArrivalTime(req.getArrivalTime());
+        exTrain.setDepartureTime(req.getDepartureTime());
+        return trainRepository.save(exTrain);
+    }
+
+    @Override
+    public void deleteTrain(Long id) throws TrainException {
+        Optional<TrainDetails> otp = trainRepository.findById(id);
+        if(otp.isEmpty()){
+            throw new TrainException("Train not found with id : "+id);
+        }
+        trainRepository.deleteById(id);
+    }
+
+    @Override
+    public TrainDetails getTrainById(Long id) throws TrainException {
+        Optional<TrainDetails> otp = trainRepository.findById(id);
+        if(otp.isPresent()){
+            return otp.get();
+        }
+        throw new TrainException("Train not found with id : "+id);
+    }
+
+    @Override
+    public TrainDetails markTrainDelayed(Long id) {
+        return null;
+    }
+
+    @Override
+    public TrainDetails cancelTrain(Long id) {
+        return null;
+    }
+
+    @Override
+    public String getTrainStatus(Long id) {
+        return "";
+    }
+
+    @Override
+    public List<TrainDetails> getTodayTrains() {
+        return List.of();
+    }
+
+    @Override
+    public List<TrainDetails> getTrainsByDate(LocalDate date) {
+        return List.of();
+    }
+
+    @Override
+    public List<TrainDetails> getTrainsBySourceAndDestination(String source, String destination) {
+        return List.of();
     }
 }

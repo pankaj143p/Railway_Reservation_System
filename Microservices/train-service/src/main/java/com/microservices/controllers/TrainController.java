@@ -28,4 +28,9 @@ public class TrainController {
         List<TrainDetails> trainList = trainService.getAllTrains();
         return new ResponseEntity<>(trainList,HttpStatus.OK);
     }
+
+    @GetMapping("/search/{}")
+    public List<TrainDetails> searchTrain(@RequestParam String keyword){
+        return trainService.searchTrains(keyword);
+    }
 }
