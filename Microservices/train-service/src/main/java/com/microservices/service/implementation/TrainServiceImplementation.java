@@ -67,6 +67,7 @@ public class TrainServiceImplementation implements TrainService {
         if(otp.isEmpty()){
             throw new TrainException("Train not found with id : "+id);
         }
+
         trainRepository.deleteById(id);
     }
 
@@ -96,16 +97,16 @@ public class TrainServiceImplementation implements TrainService {
 
     @Override
     public List<TrainDetails> getTodayTrains() {
-        return List.of();
+        return trainRepository.findByDate(LocalDate.now());
     }
 
     @Override
     public List<TrainDetails> getTrainsByDate(LocalDate date) {
-        return List.of();
+        return trainRepository.findByDate(date);
     }
 
     @Override
     public List<TrainDetails> getTrainsBySourceAndDestination(String source, String destination) {
-        return List.of();
+        return trainRepository.findBySourceAndDestination(source, destination);
     }
 }

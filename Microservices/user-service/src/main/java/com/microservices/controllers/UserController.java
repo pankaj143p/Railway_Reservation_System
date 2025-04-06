@@ -53,4 +53,6 @@ public class UserController {
         userSer.deleteUser(id);
         return new ResponseEntity<>("User deleted" ,HttpStatus.ACCEPTED);
     }
+
+
 }

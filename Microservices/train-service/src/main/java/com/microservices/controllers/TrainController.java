@@ -1,11 +1,14 @@
 package com.microservices.controllers;
+import com.microservices.exception.TrainException;
 import com.microservices.model.TrainDetails;
 import com.microservices.service.TrainService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -29,8 +32,35 @@ public class TrainController {
         return new ResponseEntity<>(trainList,HttpStatus.OK);
     }
 
-    @GetMapping("/search/{}")
+    @GetMapping("/search")
     public List<TrainDetails> searchTrain(@RequestParam String keyword){
         return trainService.searchTrains(keyword);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<TrainDetails> updateTrain(@PathVariable Long id, @RequestBody TrainDetails train) throws TrainException {
+        TrainDetails updateTrain = trainService.updateTrain(id, train);
+        return new ResponseEntity<>(updateTrain,HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteTrain(@PathVariable Long id) throws TrainException {
+        trainService.deleteTrain(id);
+        return new ResponseEntity<>("Train Deleted", HttpStatus.ACCEPTED);
+    }
+
+    @GetMapping("/today")
+    public List<TrainDetails> getTodayTrains() {
+        return trainService.getTodayTrains();
+    }
+
+    @GetMapping("/byDate")
+    public List<TrainDetails> getByDate(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return trainService.getTrainsByDate(date);
+    }
+
+    @GetMapping("/route")
+    public List<TrainDetails> getByRoute(@RequestParam String source, @RequestParam String destination) {
+        return trainService.getTrainsBySourceAndDestination(source, destination);
     }
 }
