@@ -2,10 +2,12 @@ package com.microservices.model;
 
 import com.microservices.domain.TicketStatus;
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Data
 public class TicketBooking {
 
     @Id
@@ -21,6 +23,8 @@ public class TicketBooking {
 
     private String seatNumber;
 
+    private int seatCount;
+
     private Long trainId;
 
     private String fullName;
@@ -28,8 +32,6 @@ public class TicketBooking {
     private String mobileNo;
 
     private String email;
-
-    private int age;
 
     @Enumerated(EnumType.STRING)
     private TicketStatus status;

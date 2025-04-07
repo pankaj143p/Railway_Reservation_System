@@ -1,9 +1,8 @@
 package com.microservices.service.implementation;
 
+import com.microservices.domain.TrainStatus;
 import com.microservices.exception.TrainException;
-import com.microservices.exception.UserException;
 import com.microservices.model.TrainDetails;
-import com.microservices.model.User;
 import com.microservices.repository.TrainRepository;
 import com.microservices.service.TrainService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +28,7 @@ public class TrainServiceImplementation implements TrainService {
         train.setRoutes(req.getRoutes());
         train.setArrivalTime(req.getArrivalTime());
         train.setDepartureTime(req.getDepartureTime());
+        train.setStatus(TrainStatus.ON_TIME);
         trainRepository.save(train);
         return "Train added successfully";
     }
@@ -58,6 +58,7 @@ public class TrainServiceImplementation implements TrainService {
         exTrain.setRoutes(req.getRoutes());
         exTrain.setArrivalTime(req.getArrivalTime());
         exTrain.setDepartureTime(req.getDepartureTime());
+        exTrain.setStatus(TrainStatus.ON_TIME);
         return trainRepository.save(exTrain);
     }
 
@@ -97,12 +98,12 @@ public class TrainServiceImplementation implements TrainService {
 
     @Override
     public List<TrainDetails> getTodayTrains() {
-        return trainRepository.findByDate(LocalDate.now());
+        return trainRepository.findBydepartureTime(LocalDate.now());
     }
 
     @Override
     public List<TrainDetails> getTrainsByDate(LocalDate date) {
-        return trainRepository.findByDate(date);
+        return trainRepository.findBydepartureTime(date);
     }
 
     @Override

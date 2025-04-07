@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface TrainRepository extends JpaRepository<TrainDetails, Long> {
     List<TrainDetails> findBytrainNameStartingWithIgnoreCase(String keyword);
-    List<TrainDetails> findByDate(LocalDate date);
+    List<TrainDetails> findBydepartureTime(LocalDate date);
     List<TrainDetails> findBySourceAndDestination(String source, String destination);
 }

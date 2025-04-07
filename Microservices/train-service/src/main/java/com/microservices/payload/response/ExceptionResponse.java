@@ -1,4 +1,4 @@
-package com.microservices.response;
+package com.microservices.payload.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

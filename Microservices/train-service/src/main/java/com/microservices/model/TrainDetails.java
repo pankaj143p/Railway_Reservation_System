@@ -1,5 +1,6 @@
 package com.microservices.model;
 
+import com.microservices.domain.TrainStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalTime;
@@ -31,4 +32,8 @@ public class TrainDetails {
 
     @Column(nullable = false)
     private LocalTime arrivalTime;
+
+    @Column(nullable = false)
+    private TrainStatus status;
+
 }
