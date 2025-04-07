@@ -3,6 +3,8 @@ package com.microservices.model;
 import com.microservices.domain.TicketStatus;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 public class TicketBooking {
 
@@ -19,8 +21,18 @@ public class TicketBooking {
 
     private String seatNumber;
 
-    private Long train_id;
+    private Long trainId;
+
+    private String fullName;
+
+    private String mobileNo;
+
+    private String email;
+
+    private int age;
 
     @Enumerated(EnumType.STRING)
     private TicketStatus status;
+
+    private LocalDateTime bookingTime;
 }
