@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/train")
+@RequestMapping("/trains")
 
 public class TrainController {
 
@@ -25,6 +25,14 @@ public class TrainController {
         String newTrain = trainService.addTrain(req);
         return ResponseEntity.ok(newTrain);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TrainDetails> getTrainById(@PathVariable Long id) throws TrainException {
+        TrainDetails train = trainService.getTrainById(id);
+        return ResponseEntity.ok(train);
+    }
+
+
 
     @GetMapping()
     public ResponseEntity<List<TrainDetails>> getAllTrain(){
