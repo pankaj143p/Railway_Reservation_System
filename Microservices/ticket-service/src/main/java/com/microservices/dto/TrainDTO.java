@@ -1,14 +1,18 @@
 package com.microservices.dto;
-
-import com.microservices.domain.TrainStatus;
 import lombok.Data;
+import java.time.LocalTime;
+
 
 @Data
 public class TrainDTO {
-    private Long id;
-    private String name;
+    private String trainName;
+
     private String source;
+
     private String destination;
-    private int totalSeats;
-    private TrainStatus status;
+
+    private LocalTime departureTime;
+
+    private LocalTime arrivalTime;
+
 }

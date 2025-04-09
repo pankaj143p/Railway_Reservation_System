@@ -1,40 +1,27 @@
 package com.microservices.model;
-
-import com.microservices.domain.TicketStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Data
-public class TicketBooking {
 
+@Data
+@Entity
+public class TicketBooking {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ticket_id")
     private Long ticket_id;
 
-    @Column(nullable = false)
-    private String passengerName;
-
+    private String fullName;
     private int age;
-
-    private double tickedPrice;
-
-    private String seatNumber;
-
-    private int seatCount;
+    private String email;
+    private String ticketNumber;
+    private LocalDateTime bookingDate;
 
     private Long trainId;
-
-    private String fullName;
-
-    private String mobileNo;
-
-    private String email;
-
-    @Enumerated(EnumType.STRING)
-    private TicketStatus status;
-
-    private LocalDateTime bookingTime;
+    private String trainName;
+    private String source;
+    private String destination;
+    private LocalDateTime departureTime;
 }

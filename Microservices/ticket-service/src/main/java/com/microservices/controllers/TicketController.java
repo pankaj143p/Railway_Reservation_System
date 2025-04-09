@@ -1,6 +1,7 @@
 package com.microservices.controllers;
 
-import com.microservices.dto.TicketRequest;
+import com.microservices.dto.TicketRequestDTO;
+import com.microservices.dto.TicketResponseDTO;
 import com.microservices.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,10 +25,10 @@ public class TicketController {
 //    }
 
 
-    @PostMapping("/book")
-    public ResponseEntity<String> bookTicket(@RequestBody TicketRequest req) {
+    @PostMapping("/book/{train_id}")
+    public ResponseEntity<TicketResponseDTO> bookTicket(@PathVariable Long train_id, @RequestBody TicketRequestDTO req) {
 
-        String result = ticketService.bookTicket(req.getTrainId(), req.getFullName(), req.getSeatCount());
+        TicketResponseDTO result = ticketService.bookTicket(train_id, req);
         return ResponseEntity.ok(result);
     }
 }
