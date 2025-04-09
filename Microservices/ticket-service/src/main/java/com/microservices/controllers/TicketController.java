@@ -5,7 +5,6 @@ import com.microservices.dto.TicketResponseDTO;
 import com.microservices.model.TicketBooking;
 import com.microservices.service.TicketService;
 import lombok.RequiredArgsConstructor;
-import org.apache.hc.core5.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
