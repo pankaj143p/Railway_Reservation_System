@@ -1,4 +1,5 @@
 package com.microservices.model;
+import com.microservices.domain.TicketStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,5 +24,9 @@ public class TicketBooking {
     private String trainName;
     private String source;
     private String destination;
+    @Column(name = "no_of_seats")
+    private int noOfSeats;
     private LocalDateTime departureTime;
+    @Enumerated(EnumType.STRING)
+    private TicketStatus status = TicketStatus.WAITING;
 }

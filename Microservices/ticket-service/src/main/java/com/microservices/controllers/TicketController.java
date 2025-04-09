@@ -2,8 +2,10 @@ package com.microservices.controllers;
 
 import com.microservices.dto.TicketRequestDTO;
 import com.microservices.dto.TicketResponseDTO;
+import com.microservices.model.TicketBooking;
 import com.microservices.service.TicketService;
 import lombok.RequiredArgsConstructor;
+import org.apache.hc.core5.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,18 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class TicketController {
 
-     private final TicketService ticketService;
-
-//    @PostMapping("/book")
-//    public ResponseEntity<String> bookTicket(
-//            @RequestParam Long trainId,
-//            @RequestParam String fullName,
-//            @RequestParam int seatCount) {
-//
-//        String result = ticketService.bookTicket(trainId, fullName, seatCount);
-//        return ResponseEntity.ok(result);
-//    }
-
+    private final TicketService ticketService;
 
     @PostMapping("/book/{train_id}")
     public ResponseEntity<TicketResponseDTO> bookTicket(@PathVariable Long train_id, @RequestBody TicketRequestDTO req) {
@@ -31,6 +22,19 @@ public class TicketController {
         TicketResponseDTO result = ticketService.bookTicket(train_id, req);
         return ResponseEntity.ok(result);
     }
+
+    @PutMapping("/cancel/{ticketId}")
+    public ResponseEntity<String> cancelTicket(@PathVariable Long ticketId) {
+        String result = ticketService.cancelTicket(ticketId);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{ticketId}")
+    public ResponseEntity<TicketBooking> getTicketDetails(@PathVariable Long ticketId){
+        TicketBooking ticket = ticketService.getTicketDetails(ticketId);
+        return ResponseEntity.ok(ticket);
+    }
+
 }
 
 

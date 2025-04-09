@@ -20,4 +20,5 @@ public interface TrainService {
     List<TrainDetails> getTrainsByDate(LocalDate date);
     List<TrainDetails> getTrainsBySourceAndDestination(String source, String destination);
     String decreaseSeats(Long id, int cnt);
+    String increaseSeats(Long id, int cnt);
 }

@@ -126,5 +126,13 @@ public class TrainServiceImplementation implements TrainService {
         trainRepository.save(train);
         return "Seats updated successfully";
     }
+    @Override
+    public String increaseSeats(Long id, int count) {
+        TrainDetails train = trainRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Train not found"));
+        train.setNoOfSeats(train.getNoOfSeats() + count);
+        trainRepository.save(train);
+        return "Seats updated successfully";
+    }
 
 }

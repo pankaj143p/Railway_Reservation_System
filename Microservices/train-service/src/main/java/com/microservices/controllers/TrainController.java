@@ -72,8 +72,14 @@ public class TrainController {
     }
 
     @PutMapping("/{id}/seats/decrease")
-    public ResponseEntity<String> decdecreaseSeats(@PathVariable Long id, @RequestParam int count) {
+    public ResponseEntity<String> decreaseSeats(@PathVariable Long id, @RequestParam int count) {
         String res = trainService.decreaseSeats(id, count);
+        return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}/seats/increase")
+    public ResponseEntity<String> increaseSeats(@PathVariable Long id, @RequestParam int count) {
+        String res = trainService.increaseSeats(id, count);
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 }

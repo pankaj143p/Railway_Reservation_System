@@ -1,6 +1,7 @@
 package com.microservices.service.implementation;
 
 import com.microservices.component.Methods;
+import com.microservices.domain.TicketStatus;
 import com.microservices.dto.TicketRequestDTO;
 import com.microservices.dto.TicketResponseDTO;
 import com.microservices.dto.TrainDTO;
@@ -42,7 +43,7 @@ public class TicketServiceImplementation implements TicketService {
             ticket.setSource(train.getSource());
             ticket.setDestination(train.getDestination());
             ticket.setDepartureTime(LocalDateTime.now());
-
+            ticket.setStatus(TicketStatus.BOOKED);
             ticketRepository.save(ticket);
 
             // update noOfSeats
@@ -59,9 +60,26 @@ public class TicketServiceImplementation implements TicketService {
             return response;
         }
 
+
     @Override
+    // method for cancel ticket
     public String cancelTicket(Long ticketId) {
-        return "";
+        Optional<TicketBooking> otp = ticketRepository.findById(ticketId);
+        if(otp.isPresent()){
+            TicketBooking ticket = otp.get();
+            if(ticket.getStatus() == TicketStatus.CANCELLED) {
+                return "Ticket "+ticket.getTicketNumber()+" already cancelled!";
+            }
+            if(ticket.getStatus() == TicketStatus.WAITING){
+                return "Ticket "+ticket.getTicketNumber()+" is pending, Please confirm it";
+            }
+            trainClient.increaseSeats(ticket.getTrainId(), ticket.getNoOfSeats());
+            ticket.setStatus(TicketStatus.CANCELLED);
+            ticketRepository.save(ticket);
+
+            return "Ticket with ticket number "+ticket.getTicketNumber()+" has been cancelled ";
+        }
+        throw new RuntimeException("ticket not found");
     }
 
     @Override

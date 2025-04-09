@@ -13,4 +13,6 @@ public interface TrainClient {
     TrainDTO getTrainById(@PathVariable("id") Long id);
     @PutMapping("/trains/{id}/seats/decrease")
     String decreaseSeats(@PathVariable("id") Long trainId, @RequestParam("count") int count);
+    @PutMapping("/trains/{id}/seats/increase")
+    String increaseSeats(@PathVariable("id") Long trainId, @RequestParam("count") int count);
 }
