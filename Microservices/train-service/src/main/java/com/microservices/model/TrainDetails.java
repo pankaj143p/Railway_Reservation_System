@@ -36,4 +36,7 @@ public class TrainDetails {
     @Column(nullable = false)
     private TrainStatus status;
 
+    @Column(name="noOfSeats")
+    private Integer noOfSeats;
+
 }

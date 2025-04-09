@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 public class TicketRequestDTO {
     private Long trainId;
     private String fullName;
-    private int seatCount;
+    private Integer seatCount;
     private int age;
     private String email;
     private LocalDateTime date;

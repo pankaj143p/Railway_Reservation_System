@@ -15,4 +15,5 @@ public class TrainDTO {
 
     private LocalTime arrivalTime;
 
+    private int noOfSeats;
 }

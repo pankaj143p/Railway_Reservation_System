@@ -29,6 +29,7 @@ public class TrainServiceImplementation implements TrainService {
         train.setArrivalTime(req.getArrivalTime());
         train.setDepartureTime(req.getDepartureTime());
         train.setStatus(TrainStatus.ON_TIME);
+        train.setNoOfSeats(req.getNoOfSeats());
         trainRepository.save(train);
         return "Train added successfully";
     }
@@ -59,6 +60,7 @@ public class TrainServiceImplementation implements TrainService {
         exTrain.setArrivalTime(req.getArrivalTime());
         exTrain.setDepartureTime(req.getDepartureTime());
         exTrain.setStatus(TrainStatus.ON_TIME);
+        exTrain.setNoOfSeats(req.getNoOfSeats());
         return trainRepository.save(exTrain);
     }
 
@@ -110,4 +112,19 @@ public class TrainServiceImplementation implements TrainService {
     public List<TrainDetails> getTrainsBySourceAndDestination(String source, String destination) {
         return trainRepository.findBySourceAndDestination(source, destination);
     }
+
+    @Override
+    public String decreaseSeats(Long id, int count) {
+        TrainDetails train = trainRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Train not found"));
+
+        if(train.getNoOfSeats() < count) {
+            return "Not enough seats";
+        }
+
+        train.setNoOfSeats(train.getNoOfSeats() - count);
+        trainRepository.save(train);
+        return "Seats updated successfully";
+    }
+
 }

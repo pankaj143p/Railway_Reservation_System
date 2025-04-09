@@ -1,8 +1,6 @@
 package com.microservices.service.implementation;
 
 import com.microservices.component.Methods;
-import com.microservices.domain.TicketStatus;
-import com.microservices.domain.TrainStatus;
 import com.microservices.dto.TicketRequestDTO;
 import com.microservices.dto.TicketResponseDTO;
 import com.microservices.dto.TrainDTO;
@@ -11,10 +9,10 @@ import com.microservices.model.TicketBooking;
 import com.microservices.repository.TicketRepository;
 import com.microservices.service.TicketService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +45,8 @@ public class TicketServiceImplementation implements TicketService {
 
             ticketRepository.save(ticket);
 
+            // update noOfSeats
+            trainClient.decreaseSeats(train_id, request.getSeatCount());
             // Prepare response
             TicketResponseDTO response = new TicketResponseDTO();
             response.setFullName(ticket.getFullName());
@@ -59,8 +59,6 @@ public class TicketServiceImplementation implements TicketService {
             return response;
         }
 
-
-
     @Override
     public String cancelTicket(Long ticketId) {
         return "";
@@ -72,7 +70,11 @@ public class TicketServiceImplementation implements TicketService {
     }
 
     @Override
-    public TicketResponseDTO getTicketDetails(Long ticket_id) {
-        return null;
+    public TicketBooking getTicketDetails(Long ticket_id) {
+        Optional<TicketBooking> otp = ticketRepository.findById(ticket_id);
+        if(otp.isPresent()){
+            return otp.get();
+        }
+        throw new RuntimeException("ticket with "+ticket_id+"not present!");
     }
 }

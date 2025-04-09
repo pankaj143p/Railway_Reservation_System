@@ -11,4 +11,7 @@ public class Methods {
         String shortId = uuid.substring(0, 8).toUpperCase();
         return "TCKT-" + shortId;
     }
+    public int sub(int a, int b){
+    return a-b;
+    }
 }

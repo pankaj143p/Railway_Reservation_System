@@ -21,7 +21,7 @@ public class TrainController {
 
 
     @PostMapping("/add")
-    public ResponseEntity<String> addTrain(@RequestBody TrainDetails req){
+    public ResponseEntity<String> addTrain(@RequestBody TrainDetails req) {
         String newTrain = trainService.addTrain(req);
         return ResponseEntity.ok(newTrain);
     }
@@ -33,22 +33,21 @@ public class TrainController {
     }
 
 
-
     @GetMapping()
-    public ResponseEntity<List<TrainDetails>> getAllTrain(){
+    public ResponseEntity<List<TrainDetails>> getAllTrain() {
         List<TrainDetails> trainList = trainService.getAllTrains();
-        return new ResponseEntity<>(trainList,HttpStatus.OK);
+        return new ResponseEntity<>(trainList, HttpStatus.OK);
     }
 
     @GetMapping("/search")
-    public List<TrainDetails> searchTrain(@RequestParam String keyword){
+    public List<TrainDetails> searchTrain(@RequestParam String keyword) {
         return trainService.searchTrains(keyword);
     }
 
     @PutMapping("/update/{id}")
     public ResponseEntity<TrainDetails> updateTrain(@PathVariable Long id, @RequestBody TrainDetails train) throws TrainException {
         TrainDetails updateTrain = trainService.updateTrain(id, train);
-        return new ResponseEntity<>(updateTrain,HttpStatus.OK);
+        return new ResponseEntity<>(updateTrain, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
@@ -70,5 +69,11 @@ public class TrainController {
     @GetMapping("/route")
     public List<TrainDetails> getByRoute(@RequestParam String source, @RequestParam String destination) {
         return trainService.getTrainsBySourceAndDestination(source, destination);
+    }
+
+    @PutMapping("/{id}/seats/decrease")
+    public ResponseEntity<String> decdecreaseSeats(@PathVariable Long id, @RequestParam int count) {
+        String res = trainService.decreaseSeats(id, count);
+        return new ResponseEntity<>(res, HttpStatus.OK);
     }
 }
