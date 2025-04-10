@@ -1,4 +1,4 @@
-package com.microservice.payment_service;
+package com.microservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

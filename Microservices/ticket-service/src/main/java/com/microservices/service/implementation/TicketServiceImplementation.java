@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -94,5 +95,10 @@ public class TicketServiceImplementation implements TicketService {
             return otp.get();
         }
         throw new RuntimeException("ticket with "+ticket_id+"not present!");
+    }
+
+    @Override
+    public List<TicketBooking> getAllTickets() {
+        return ticketRepository.findAll();
     }
 }

@@ -18,7 +18,6 @@ import java.util.Optional;
 public class UserServiceImplementation implements UserService {
 
     private final UserRepository userRep;
-
     private final PasswordEncoder passwordEncoder;
 
     public String createUser(RegisterRequest request) {
