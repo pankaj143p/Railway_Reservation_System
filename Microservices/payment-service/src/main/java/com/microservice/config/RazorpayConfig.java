@@ -1,10 +1,12 @@
 package com.microservice.config;
 
 import com.razorpay.RazorpayClient;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+@Data
 @Configuration
 public class RazorpayConfig {
     @Value("${razorpay.key_id}")

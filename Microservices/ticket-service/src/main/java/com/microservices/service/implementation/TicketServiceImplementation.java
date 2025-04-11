@@ -5,6 +5,7 @@ import com.microservices.domain.TicketStatus;
 import com.microservices.dto.TicketRequestDTO;
 import com.microservices.dto.TicketResponseDTO;
 import com.microservices.dto.TrainDTO;
+import com.microservices.feign.PaymentClient;
 import com.microservices.feign.TrainClient;
 import com.microservices.model.TicketBooking;
 import com.microservices.repository.TicketRepository;
@@ -19,16 +20,22 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class TicketServiceImplementation implements TicketService {
-
     private final TicketRepository ticketRepository;
-
     private final TrainClient trainClient;
-
     private final Methods methods;
+    private final PaymentClient paymentClient;
 
     @Override
         public TicketResponseDTO bookTicket(Long train_id, TicketRequestDTO request) {
             // Get train info
+            int amount = request.getSeatCount()*10*140;
+
+            String paymentRes = paymentClient.createOrder(amount);
+
+            if(paymentRes == null || !paymentRes.contains("order_")){
+                throw new RuntimeException("Payment failed or Invalid response");
+            }
+
             TrainDTO train = trainClient.getTrainById(train_id);
 
             TicketBooking ticket = new TicketBooking();

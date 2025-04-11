@@ -7,12 +7,10 @@
 <body>
 <h2>Test Payment</h2>
 <button onclick="payNow()">Pay ₹5</button>
-
 <script>
     async function payNow() {
       const res = await fetch("http://localhost:5110/createOrder?amount=500"); // amount in paise (₹5 = 500)
       const orderId = await res.text();
-
       const options = {
         key: "your razorpay_key_id",
         amount: 500, // in paise
@@ -40,7 +38,6 @@
           color: "#3399cc"
         }
       };
-
       const rzp = new Razorpay(options);
       rzp.open();
     }

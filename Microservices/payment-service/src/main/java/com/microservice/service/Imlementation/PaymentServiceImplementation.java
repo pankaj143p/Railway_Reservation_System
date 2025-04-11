@@ -1,14 +1,12 @@
 package com.microservice.service.Imlementation;
 
 import com.microservice.config.RazorpayConfig;
-import com.microservice.dto.PaymentRequestDTO;
 import com.microservice.service.PaymentService;
 import com.microservice.util.Utils;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import lombok.AllArgsConstructor;
-import lombok.Value;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,8 +14,8 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class PaymentServiceImplementation implements PaymentService {
-    private final RazorpayClient razorpayClient;
-    private final RazorpayConfig razorpayConfig;
+    private RazorpayClient razorpayClient;
+    private RazorpayConfig razorpayConfig;
 
     @Override
     public String createOrder(int amount) throws RazorpayException {
@@ -27,9 +25,7 @@ public class PaymentServiceImplementation implements PaymentService {
         orderReq.put("payment_capture",1);
         Order order = razorpayClient.orders.create(orderReq);
         return order.get("id");
-
     }
-
     @Override
     public boolean verifyPayment(String orderId, String paymentId, String razorpaySign) {
         String payload = orderId + '|' + paymentId;
