@@ -13,6 +13,9 @@ public class RazorpayConfig {
     @Value("${razorpay.key_secret}")
     private String keySecret;
 
+    public String getSecret() {
+        return keySecret;
+    }
     @Bean
     public RazorpayClient razorpayClient () throws Exception{
         return new RazorpayClient(keyId, keySecret);
