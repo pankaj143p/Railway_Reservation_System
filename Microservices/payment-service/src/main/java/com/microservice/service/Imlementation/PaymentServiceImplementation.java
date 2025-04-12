@@ -6,16 +6,20 @@ import com.microservice.util.Utils;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
-import lombok.AllArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-@AllArgsConstructor
 public class PaymentServiceImplementation implements PaymentService {
-    private RazorpayClient razorpayClient;
-    private RazorpayConfig razorpayConfig;
+    private final RazorpayClient razorpayClient;
+    private final RazorpayConfig razorpayConfig;
+
+    @Autowired
+    public PaymentServiceImplementation(RazorpayClient razorpayClient, RazorpayConfig razorpayConfig) {
+        this.razorpayClient = razorpayClient;
+        this.razorpayConfig = razorpayConfig;
+    }
 
     @Override
     public String createOrder(int amount) throws RazorpayException {

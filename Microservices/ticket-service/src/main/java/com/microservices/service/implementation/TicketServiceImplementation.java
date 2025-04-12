@@ -28,15 +28,32 @@ public class TicketServiceImplementation implements TicketService {
     @Override
         public TicketResponseDTO bookTicket(Long train_id, TicketRequestDTO request) {
             // Get train info
-            int amount = request.getSeatCount()*10*140;
+        int amount = request.getSeatCount() * 10 * 140;
 
-            String paymentRes = paymentClient.createOrder(amount);
+        // Step 1: Create payment order using Razorpay
+        String paymentRes = paymentClient.createOrder(amount);
+        System.out.println("Payment response: " + paymentRes);
 
-            if(paymentRes == null || !paymentRes.contains("order_")){
-                throw new RuntimeException("Payment failed or Invalid response");
-            }
+        // Check if the order ID is valid
+        if (paymentRes == null || !paymentRes.contains("order_")) {
+            throw new RuntimeException("Payment failed or Invalid response from Razorpay");
+        }
 
-            TrainDTO train = trainClient.getTrainById(train_id);
+        // Step 2: Proceed to frontend (Razorpay checkout form) to get payment details
+        // After the user pays, you get the paymentId and razorpaySign (signature)
+
+        // For the sake of this example, assume that we are getting these values from frontend
+        // Normally, you will receive these values in the callback or from the client (JavaScript).
+        String paymentId = "razorpay_payment_id";  // This will come from frontend after payment
+        String razorpaySign = "razorpay_signature"; // This will come from frontend after payment
+
+        // Step 3: Verify the payment with Razorpay
+        boolean isPaymentVerified = paymentClient.verifyPayment(paymentRes, paymentId, razorpaySign);
+        if (!isPaymentVerified) {
+            throw new RuntimeException("Payment verification failed");
+        }
+
+        TrainDTO train = trainClient.getTrainById(train_id);
 
             TicketBooking ticket = new TicketBooking();
             ticket.setFullName(request.getFullName());
@@ -52,7 +69,9 @@ public class TicketServiceImplementation implements TicketService {
             ticket.setDestination(train.getDestination());
             ticket.setDepartureTime(LocalDateTime.now());
             ticket.setStatus(TicketStatus.BOOKED);
-            ticketRepository.save(ticket);
+            ticket.setNoOfSeats(request.getSeatCount());
+
+           ticketRepository.save(ticket);
 
             // update noOfSeats
             trainClient.decreaseSeats(train_id, request.getSeatCount());

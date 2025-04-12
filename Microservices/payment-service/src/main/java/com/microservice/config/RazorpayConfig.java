@@ -1,6 +1,7 @@
 package com.microservice.config;
 
 import com.razorpay.RazorpayClient;
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +20,10 @@ public class RazorpayConfig {
         return keySecret;
     }
     @Bean
-    public RazorpayClient razorpayClient () throws Exception{
-        return new RazorpayClient(keyId, keySecret);
+    public RazorpayClient razorpayClient() throws Exception {
+        RazorpayClient client = new RazorpayClient(keyId, keySecret);
+        System.out.println("RazorpayClient initialized: " + client);
+        return client;
     }
+
 }

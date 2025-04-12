@@ -7,11 +7,13 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
 public class Utils {
-    public static boolean verifySign(String payload, String expectedSign, String secret) throws Exception{
+
+    public static boolean verifySign(String payload, String expectedSign, String secret) throws Exception {
         String actualSign = calculateRFC2104HMAC(payload, secret);
         return actualSign.equals(expectedSign);
     }
-    private static String calculateRFC2104HMAC(String data, String secret) throws Exception{
+
+    private static String calculateRFC2104HMAC(String data, String secret) throws Exception {
         SecretKeySpec signingKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(signingKey);
