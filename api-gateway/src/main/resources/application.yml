@@ -1,0 +1,32 @@
+server:
+  port: 6111
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/createOrder
+            - Path=/verify
+
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+
+        - id: train-service
+          uri: lb://train-service
+          predicates:
+            - Path=/trains/**
+
+        - id: ticket-service
+          uri: lb://ticket-service
+          predicates:
+            - Path=/tickets/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:6010/eureka
