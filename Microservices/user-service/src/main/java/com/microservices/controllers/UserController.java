@@ -54,5 +54,11 @@ public class UserController {
         return new ResponseEntity<>("User deleted" ,HttpStatus.ACCEPTED);
     }
 
+    @GetMapping("/validate")
+    public ResponseEntity<String> validateToken(@RequestParam String token) {
+        userSer.validateToken(token);
+        return ResponseEntity.ok("Token is valid");
+    }
+
 
 }

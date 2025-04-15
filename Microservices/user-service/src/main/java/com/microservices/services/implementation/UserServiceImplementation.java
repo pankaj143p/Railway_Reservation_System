@@ -85,4 +85,11 @@ public class UserServiceImplementation implements UserService {
         exUser.setPhone(user.getPhone());
         return userRep.save(exUser);
     }
+    @Override
+    public void validateToken(String token) {
+        String email = JwtUtil.validateToken(token);
+        // Optional: check if email exists in DB
+        userRep.findByEmail(email).orElseThrow(() -> new RuntimeException("Unauthorized"));
+    }
+
 }

@@ -32,16 +32,23 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String extractEmail(String token) {
+    public static String extractEmail(String token) {
         return Jwts.parserBuilder().setSigningKey(signingKey).build()
                 .parseClaimsJws(token).getBody().getSubject();
     }
 
-    public boolean validateToken(String token, String email) {
+    public static boolean validateToken(String token, String email) {
         return extractEmail(token).equals(email) && !isTokenExpired(token);
     }
+    public static String validateToken(String token) {
+        try {
+            return extractEmail(token); // returns email if token is valid
+        } catch (JwtException e) {
+            throw new RuntimeException("Invalid or expired token");
+        }
+    }
 
-    private boolean isTokenExpired(String token) {
+    private static boolean isTokenExpired(String token) {
         return Jwts.parserBuilder().setSigningKey(signingKey).build()
                 .parseClaimsJws(token).getBody().getExpiration().before(new Date());
     }
