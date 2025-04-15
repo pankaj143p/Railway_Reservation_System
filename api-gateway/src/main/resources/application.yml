@@ -10,21 +10,29 @@ spring:
           predicates:
             - Path=/createOrder
             - Path=/verify
+          filters:
+            - AuthenticationFilter
 
         - id: user-service
           uri: lb://user-service
           predicates:
             - Path=/api/users/**
-
+          filters:
+            - AuthenticationFilter
+            -
         - id: train-service
           uri: lb://train-service
           predicates:
             - Path=/trains/**
+          filters:
+            - AuthenticationFilter
 
         - id: ticket-service
           uri: lb://ticket-service
           predicates:
             - Path=/tickets/**
+          filters:
+            - AuthenticationFilter
 
 eureka:
   client:
