@@ -5,10 +5,16 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: payment-service
+        - id: payment-service-create
           uri: lb://payment-service
           predicates:
             - Path=/createOrder
+          filters:
+            - AuthenticationFilter
+
+        - id: payment-service-verify
+          uri: lb://payment-service
+          predicates:
             - Path=/verify
           filters:
             - AuthenticationFilter
@@ -19,7 +25,7 @@ spring:
             - Path=/api/users/**
           filters:
             - AuthenticationFilter
-            -
+
         - id: train-service
           uri: lb://train-service
           predicates:
