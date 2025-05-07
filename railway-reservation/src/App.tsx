@@ -1,5 +1,5 @@
 
-import HomePage from './pages/homepage'
+import HomePage from './pages/homePage/homepage';
 
 function App() {
   return (
