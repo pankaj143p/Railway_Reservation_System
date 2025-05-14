@@ -3,7 +3,7 @@ import { loginUser } from "../../services/authService";
 import InputField from "../../components/ui/inputField";
 import {Button} from "../../components/ui/button";
 
-const Login = () => {
+export const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
      
@@ -15,8 +15,7 @@ const Login = () => {
         }
         catch (error : any) {
             alert('Login failed: ' + error.message);
-        }
-        
+        } 
     }
 
     return (
@@ -26,16 +25,16 @@ const Login = () => {
           <InputField
             type="email"
             placeholder="Email"
-            value="{email}"
+            value={email}
             onChange={(e)=> setEmail(e.target.value)}
           ></InputField>
             <InputField
                 type="password"
                 placeholder="Password"
-                value="{password}"
+                value={password}
                 onChange={(e)=> setPassword(e.target.value)}
             ></InputField>
-            <Button>Login</Button>
+            <Button onClick={handleLogin}>Login</Button>
         </div>
      </div>
     );

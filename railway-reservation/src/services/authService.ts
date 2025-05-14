@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { LoginResponse } from '../interfaces/res'; // update the path if needed
+import { LoginResponse } from '../interfaces/res';
 
 const API_URL = 'http://192.168.0.100:6111/api/users';
 
