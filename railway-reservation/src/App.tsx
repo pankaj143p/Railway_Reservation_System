@@ -1,8 +1,9 @@
-import {Login} from './pages/loginPage/login';
+import HomePage from './pages/homePage/homepage';
 function App() {
   return (
     <>
-      <Login></Login>
+      {/* <Login></Login> */}
+      <HomePage></HomePage>
     </>
   )
 }
