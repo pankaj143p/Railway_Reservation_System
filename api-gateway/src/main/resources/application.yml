@@ -39,6 +39,51 @@ spring:
             - Path=/tickets/**
           filters:
             - AuthenticationFilter
+        #swagger doc routes
+        - id: payment-service-docs
+          uri: lb://payment-service
+          predicates:
+            - Path=/payment-service/v3/api-docs
+          filters:
+            - RewritePath=/payment-service/v3/api-docs,/v3/api-docs
+
+        - id: user-service-docs
+          uri: lb://user-service
+          predicates:
+            - Path=/user-service/v3/api-docs
+          filters:
+            - RewritePath=/user-service/v3/api-docs,/v3/api-docs
+
+        - id: train-service-docs
+          uri: lb://train-service
+          predicates:
+              Path=/train-service/v3/api-docs
+          filters:
+            - RewritePath=/train-service/v3/api-docs,/v3/api-docs
+
+        - id: ticket-service-docs
+          uri: lb://ticket-service
+          predicates:
+            - Path=/ticket-service/v3/api-docs
+          filters:
+            - RewritePath=/ticket-service/v3/api-docs,/v3/api-docs
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: payment-service
+        url: /payment-service/v3/api-docs
+
+      - name: user-service
+        url: /user-service/v3/api-docs
+
+      - name: ticket-service
+        url: /ticket-service/v3/api-docs
+
+      - name: train-service
+        url: /train-service/v3/api-docs
+
 
 eureka:
   client:

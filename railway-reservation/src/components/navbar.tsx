@@ -1,4 +1,4 @@
-import { Book, Menu, Sunset, Trees, Zap } from "lucide-react";
+import {Menu} from "lucide-react";
 
 import {
   Accordion,
@@ -61,102 +61,99 @@ const Navbar = ({
   menu = [
     { title: "Home", url: "#" },
     {
-      title: "Products",
+      title: "AboutUs",
       url: "#",
-      items: [
-        {
-          title: "Blog",
-          description: "The latest industry news, updates, and info",
-          icon: <Book className="size-5 shrink-0" />,
-          url: "#",
-        },
-        {
-          title: "Company",
-          description: "Our mission is to innovate and empower the world",
-          icon: <Trees className="size-5 shrink-0" />,
-          url: "#",
-        },
-        {
-          title: "Careers",
-          description: "Browse job listing and discover our workspace",
-          icon: <Sunset className="size-5 shrink-0" />,
-          url: "#",
-        },
-        {
-          title: "Support",
-          description:
-            "Get in touch with our support team or visit our community forums",
-          icon: <Zap className="size-5 shrink-0" />,
-          url: "#",
-        },
-      ],
+      // items: [
+      //   {
+      //     title: "Blog",
+      //     description: "The latest industry news, updates, and info",
+      //     icon: <Book className="size-5 shrink-0" />,
+      //     url: "#",
+      //   },
+      //   {
+      //     title: "Company",
+      //     description: "Our mission is to innovate and empower the world",
+      //     icon: <Trees className="size-5 shrink-0" />,
+      //     url: "#",
+      //   },
+      //   {
+      //     title: "Careers",
+      //     description: "Browse job listing and discover our workspace",
+      //     icon: <Sunset className="size-5 shrink-0" />,
+      //     url: "#",
+      //   },
+      //   {
+      //     title: "Support",
+      //     description:
+      //       "Get in touch with our support team or visit our community forums",
+      //     icon: <Zap className="size-5 shrink-0" />,
+      //     url: "#",
+      //   },
+      // ],
     },
     {
-      title: "Resources",
+      title: "Services",
       url: "#",
-      items: [
-        {
-          title: "Help Center",
-          description: "Get all the answers you need right here",
-          icon: <Zap className="size-5 shrink-0" />,
-          url: "#",
-        },
-        {
-          title: "Contact Us",
-          description: "We are here to help you with any questions you have",
-          icon: <Sunset className="size-5 shrink-0" />,
-          url: "#",
-        },
-        {
-          title: "Status",
-          description: "Check the current status of our services and APIs",
-          icon: <Trees className="size-5 shrink-0" />,
-          url: "#",
-        },
-        {
-          title: "Terms of Service",
-          description: "Our terms and conditions for using our services",
-          icon: <Book className="size-5 shrink-0" />,
-          url: "#",
-        },
-      ],
+      // items: [
+      //   {
+      //     title: "Help Center",
+      //     description: "Get all the answers you need right here",
+      //     icon: <Zap className="size-5 shrink-0" />,
+      //     url: "#",
+      //   },
+      //   {
+      //     title: "Contact Us",
+      //     description: "We are here to help you with any questions you have",
+      //     icon: <Sunset className="size-5 shrink-0" />,
+      //     url: "#",
+      //   },
+      //   {
+      //     title: "Status",
+      //     description: "Check the current status of our services and APIs",
+      //     icon: <Trees className="size-5 shrink-0" />,
+      //     url: "#",
+      //   },
+      //   {
+      //     title: "Terms of Service",
+      //     description: "Our terms and conditions for using our services",
+      //     icon: <Book className="size-5 shrink-0" />,
+      //     url: "#",
+      //   },
+      // ],
     },
     {
-      title: "Pricing",
+      title: "ContactUs",
       url: "#",
     },
-    {
-      title: "Blog",
-      url: "#",
-    },
+    
   ],
   auth = {
-    login: { title: "Login", url: "#" },
+    login: { title: "Login", url: "/login" },
     signup: { title: "Sign up", url: "#" },
   },
 }: Navbar1Props) => {
   return (
-    <section className="py-4">
+    <section className="py-4 px-8 bg-cyan-800">
       <div className="container">
         {/* Desktop Menu */}
         <nav className="hidden justify-between lg:flex">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-12">
             {/* Logo */}
-            <a href={logo.url} className="flex items-center gap-2">
+            <a href={logo.url} className="flex items-center gap-8">
               <img src={logo.src} className="max-h-8" alt={logo.alt} />
-              <span className="text-lg font-semibold tracking-tighter">
+              <span className="text-2xl font-semibold tracking-tighter text-gray-800">
                 {logo.title}
               </span>
             </a>
             <div className="flex items-center">
               <NavigationMenu>
-                <NavigationMenuList>
+                <NavigationMenuList className="flex gap-16 p-2">
                   {menu.map((item) => renderMenuItem(item))}
                 </NavigationMenuList>
               </NavigationMenu>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-6">
             <Button asChild variant="outline" size="sm">
               <a href={auth.login.url}>{auth.login.title}</a>
             </Button>

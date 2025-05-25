@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { LoginResponse } from '../interfaces/res';
 
-const API_URL = 'http://192.168.0.100:6111/api/users';
+const API_URL = 'http://localhost:6111/api/users';
 export const loginUser = async (
     email: string,
     password: string
@@ -9,7 +9,7 @@ export const loginUser = async (
     try {
       const res = await axios.post<LoginResponse>(`${API_URL}/login`, { email, password });
 
-      const users = await axios.get("http://192.168.0.100:6111/api/users", {
+      const users = await axios.get("http://localhost:6111/api/users", {
         headers: {
           Authorization: `Bearer ${res.data.token}`
         }
