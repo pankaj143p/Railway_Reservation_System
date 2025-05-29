@@ -9,8 +9,6 @@ import axios from "axios";
 
 // console.log("users ",usersData.data);
 
-
-
 export const usersData = async () => {
   try {
     const token = localStorage.getItem("token");
@@ -27,3 +25,6 @@ export const usersData = async () => {
     return null;
   }
 };
+
+
+

@@ -5,7 +5,7 @@ export interface Train {
     source: string;
     destination: string;
     totalSeats: number;
-    status: string; // e.g., "On Time", "Delayed", "Cancelled"
-    departureTime: string; // ISO date string
-    arrivalTime: string; // ISO date string
+    status: string; 
+    departureTime: string;
+    arrivalTime: string; 
 }

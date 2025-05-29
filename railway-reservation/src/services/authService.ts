@@ -42,5 +42,3 @@ export const registerUser = async (
     throw new Error(error.response?.data?.message || 'Registration failed');
   }
 };
-
-
