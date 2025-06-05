@@ -3,7 +3,9 @@ package com.microservices.service.implementation;
 import com.microservices.domain.TrainStatus;
 import com.microservices.exception.TrainException;
 import com.microservices.model.TrainDetails;
+import com.microservices.model.TrainSeats;
 import com.microservices.repository.TrainRepository;
+import com.microservices.repository.TrainSeatsRepository;
 import com.microservices.service.TrainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +18,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class TrainServiceImplementation implements TrainService {
 
+
     private final TrainRepository trainRepository;
+
+
+    private TrainSeatsRepository trainSeatsRepository;
 
     @Override
     public String addTrain(TrainDetails req) {
@@ -113,19 +119,42 @@ public class TrainServiceImplementation implements TrainService {
         return trainRepository.findBySourceAndDestination(source, destination);
     }
 
+//    @Override
+//    public String decreaseSeats(Long id, int count, String JourneyDate) {
+//        TrainDetails train = trainRepository.findById(id)
+//                .orElseThrow(() -> new RuntimeException("Train not found"));
+//
+//        if(train.getNoOfSeats() < count) {
+//            return "Not enough seats";
+//        }
+//
+//        train.setNoOfSeats(train.getNoOfSeats() - count);
+//        trainRepository.save(train);
+//        return "Seats updated successfully";
+//    }
+
+
     @Override
-    public String decreaseSeats(Long id, int count) {
-        TrainDetails train = trainRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Train not found"));
-
-        if(train.getNoOfSeats() < count) {
-            return "Not enough seats";
-        }
-
-        train.setNoOfSeats(train.getNoOfSeats() - count);
-        trainRepository.save(train);
+    public String decreaseSeats(Long id, int count, LocalDate journeyDate) {
+        TrainDetails train = new TrainDetails();
+        TrainSeats trainSeats = trainSeatsRepository.findBytrainIdAndJourneyDate(id, journeyDate)
+                .orElseGet(() -> {
+                    TrainSeats newSeats = new TrainSeats();
+                    newSeats.setTrainId(id);
+                    newSeats.setJourneyDate(journeyDate);
+                    newSeats.setAvailableSeats(train.getTotalSeats());
+                    return newSeats;
+                });
+            if(trainSeats.getAvailableSeats()<count) {
+                throw new RuntimeException("Not Enough available seats on " + journeyDate);
+            }
+           trainSeats.setAvailableSeats(trainSeats.getAvailableSeats()-count);
+           trainSeatsRepository.save(trainSeats);
         return "Seats updated successfully";
     }
+
+
+
     @Override
     public String increaseSeats(Long id, int count) {
         TrainDetails train = trainRepository.findById(id)

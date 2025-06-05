@@ -14,7 +14,6 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/trains")
-
 public class TrainController {
 
     private final TrainService trainService;
@@ -72,8 +71,8 @@ public class TrainController {
     }
 
     @PutMapping("/{id}/seats/decrease")
-    public ResponseEntity<String> decreaseSeats(@PathVariable Long id, @RequestParam int count) {
-        String res = trainService.decreaseSeats(id, count);
+    public ResponseEntity<String> decreaseSeats(@PathVariable Long id, @RequestParam int count, @RequestParam LocalDate journeyDate) {
+        String res = trainService.decreaseSeats(id, count, journeyDate);
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 

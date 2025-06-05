@@ -3,6 +3,8 @@ package com.microservices.model;
 import com.microservices.domain.TrainStatus;
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 @Data
@@ -38,5 +40,9 @@ public class TrainDetails {
 
     @Column(name="noOfSeats")
     private Integer noOfSeats;
+
+    @Column
+    private LocalDate date;
+
 
 }
