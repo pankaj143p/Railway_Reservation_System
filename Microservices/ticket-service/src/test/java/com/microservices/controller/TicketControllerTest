@@ -1,0 +1,131 @@
+package com.microservices.controllers;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.microservices.dto.TicketRequestDTO;
+import com.microservices.dto.TicketResponseDTO;
+import com.microservices.exception.TicketException;
+import com.microservices.model.TicketBooking;
+import com.microservices.service.TicketService;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.Collections;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(TicketController.class)
+class TicketControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private TicketService ticketService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Test
+    void bookTicket_success() throws Exception {
+        TicketRequestDTO req = new TicketRequestDTO();
+        req.setFullName("Test User");
+        TicketResponseDTO resp = new TicketResponseDTO();
+        resp.setFullName("Test User");
+
+        Mockito.when(ticketService.bookTicket(anyLong(), any(TicketRequestDTO.class))).thenReturn(resp);
+
+        mockMvc.perform(post("/tickets/book/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Test User"));
+    }
+
+    @Test
+    void bookTicket_error() throws Exception {
+        TicketRequestDTO req = new TicketRequestDTO();
+        Mockito.when(ticketService.bookTicket(anyLong(), any(TicketRequestDTO.class)))
+                .thenThrow(new TicketException("Booking failed"));
+
+        mockMvc.perform(post("/tickets/book/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Booking failed"));
+    }
+
+    @Test
+    void cancelTicket_success() throws Exception {
+        Mockito.when(ticketService.cancelTicket(1L)).thenReturn("Cancelled");
+        mockMvc.perform(put("/tickets/cancel/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Cancelled"));
+    }
+
+    @Test
+    void cancelTicket_error() throws Exception {
+        Mockito.when(ticketService.cancelTicket(1L)).thenThrow(new TicketException("Not found"));
+        mockMvc.perform(put("/tickets/cancel/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Not found"));
+    }
+
+    @Test
+    void updateTicket_success() throws Exception {
+        TicketBooking ticket = new TicketBooking();
+        ticket.setFullName("Updated");
+        Mockito.when(ticketService.updateTicket(eq(1L), any(TicketBooking.class))).thenReturn(ticket);
+
+        mockMvc.perform(put("/tickets/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ticket)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Updated"));
+    }
+
+    @Test
+    void getTicketDetails_success() throws Exception {
+        TicketBooking ticket = new TicketBooking();
+        ticket.setFullName("Test");
+        Mockito.when(ticketService.getTicketDetails(1L)).thenReturn(ticket);
+
+        mockMvc.perform(get("/tickets/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Test"));
+    }
+
+    @Test
+    void getAllTickets_success() throws Exception {
+        Mockito.when(ticketService.getAllTickets()).thenReturn(Collections.emptyList());
+        mockMvc.perform(get("/tickets/all"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getTicketByOrderId_success() throws Exception {
+        TicketBooking ticket = new TicketBooking();
+        ticket.setOrderId("order123");
+        Mockito.when(ticketService.getTicketByOrderId("order123")).thenReturn(ticket);
+
+        mockMvc.perform(get("/tickets/order/order123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderId").value("order123"));
+    }
+
+    @Test
+    void getTicketByUserEmail_success() throws Exception {
+        List<TicketBooking> tickets = Collections.singletonList(new TicketBooking());
+        Mockito.when(ticketService.getTicketByUserEmail("user@mail.com")).thenReturn(tickets);
+
+        mockMvc.perform(get("/tickets/user/user@mail.com"))
+                .andExpect(status().isOk());
+    }
+}

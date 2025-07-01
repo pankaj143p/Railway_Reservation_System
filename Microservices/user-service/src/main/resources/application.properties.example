@@ -1,0 +1,23 @@
+spring.application.name=user-service
+server.port=5001
+
+# MySQL Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/user_db
+spring.datasource.username=YOUR_DB_USERNAME
+spring.datasource.password=YOUR_DB_PASSWORD
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+
+# JWT Configuration
+jwt.secret=YOUR_JWT_SECRET_KEY_HERE
+
+# Eureka Server Configuration
+eureka.client.service-url.defaultZone=http://localhost:6010/eureka
+
+# Email Configuration
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=YOUR_EMAIL@gmail.com
+spring.mail.password=YOUR_APP_PASSWORD
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true

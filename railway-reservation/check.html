@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Booking with Payment</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<h2>Book Your Train Ticket</h2>
+
+<form id="ticketForm">
+    <label for="trainId">Train ID:</label>
+    <input type="number" id="trainId" name="trainId" required><br><br>
+
+    <label for="fullName">Full Name:</label>
+    <input type="text" id="fullName" name="fullName" required><br><br>
+
+    <label for="age">Age:</label>
+    <input type="number" id="age" name="age" required><br><br>
+
+    <label for="seatCount">No of Seats:</label>
+    <input type="number" id="seatCount" name="seatCount" required><br><br>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <button type="submit">Book Ticket</button>
+</form>
+
+<script>
+document.getElementById("ticketForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    // Get form data
+    const formData = new FormData(event.target);
+    const ticketDetails = {
+        trainId: formData.get('trainId'),
+        fullName: formData.get('fullName'),
+        age: formData.get('age'),
+        seatCount: formData.get('seatCount'),
+        email: formData.get('email')
+    };
+
+    // Calculate amount (in paise)
+    const amount = ticketDetails.seatCount * 10 * 140;
+
+    try {
+        // Send POST request to create order
+        const response = await fetch("http://localhost:5110/createOrder", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({ amount: amount })
+        });
+        const orderId = await response.text();
+
+        if (orderId && orderId.startsWith("order_")) {
+            // Payment options
+            const options = {
+                key: "rzp_test_osVJC0WK6xlISp", // Replace with your Razorpay key
+                amount: amount,
+                currency: "INR",
+                name: "Train Ticket Booking",
+                description: "Book Your Train Ticket",
+                order_id: orderId,
+                handler: function(response) {
+                    // After payment, verify on backend
+                    fetch("http://localhost:5110/verify", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: new URLSearchParams({
+                            orderId: orderId,
+                            paymentId: response.razorpay_payment_id,
+                            razorpaySign: response.razorpay_signature
+                        })
+                    })
+                    .then(res => res.text())
+                    .then(data => {
+                        alert(data); // Show success or failure message
+                    });
+                },
+                prefill: {
+                    name: ticketDetails.fullName,
+                    email: ticketDetails.email
+                },
+                theme: {
+                    color: "#3399cc"
+                }
+            };
+
+            // Open Razorpay payment modal
+            const rzp = new Razorpay(options);
+            rzp.open();
+        } else {
+            alert("Failed to create order, try again later.");
+        }
+    } catch (error) {
+        console.error("Error creating order:", error);
+        alert("An error occurred. Please try again.");
+    }
+});
+</script>
+
+</body>
+</html>
