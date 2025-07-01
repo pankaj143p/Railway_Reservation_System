@@ -4,5 +4,6 @@ export interface UserFormProps {
     seatCount: string;
     age: string;
     email: string;
+    date: string;
   }) => void;
 }

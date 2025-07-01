@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import fetchBookedTicketByOrderId from "../../services/api/bookedticket";
 import { Button } from "../../components/ui/button";

@@ -125,7 +125,7 @@ const handlePayment = async (formData: FormData, trainId: number) => {
                 const razorSignature = response.razorpay_signature;
 
                 try {
-                    const verifyResponse = await axios.post(
+                    await axios.post(
                         "http://localhost:6111/verify",
                         {
                             ...formData,

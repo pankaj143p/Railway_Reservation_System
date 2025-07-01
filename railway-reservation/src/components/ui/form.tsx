@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { UserFormProps } from "../../interfaces/form";
-import submitTicketForm from "../../services/ticketService";
+import { submitTicketForm } from "../../services/api/ticketservice";
 
 import { useParams } from "react-router-dom";
 

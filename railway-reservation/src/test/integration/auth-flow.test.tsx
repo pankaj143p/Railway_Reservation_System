@@ -102,12 +102,10 @@ describe('Authentication Flow Integration', () => {
 
   describe('State Management Integration', () => {
     it('maintains authentication state across component updates', async () => {
-      const user = userEvent.setup()
-      
       // Start unauthenticated
       ;(localStorage.getItem as any).mockReturnValue(null)
       
-      const { rerender } = render(
+      render(
         <BrowserRouter>
           <Button />
         </BrowserRouter>

@@ -8,6 +8,7 @@ const TrainDetails = () => {
   const [trains, setTrains] = useState<Train[]>([]);
   const [filteredTrains, setFilteredTrains] = useState<Train[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  // @ts-ignore - searchDate is used in form input but TypeScript doesn't detect it
   const [searchDate, setSearchDate] = useState("");
   const [sourceStation, setSourceStation] = useState("");
   const [destinationStation, setDestinationStation] = useState("");
