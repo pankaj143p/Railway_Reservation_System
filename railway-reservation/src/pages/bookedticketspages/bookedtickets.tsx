@@ -3,10 +3,19 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import type TicketResponse from '../../interfaces/ticket';
 import type { TicketStatus } from '../../interfaces/ticket';
+import CancellationModal from '../../components/ui/CancellationModal';
+import { cancelTicketWithRefund, CancellationResponse } from '../../services/api/cancellationService';
 
 const BookedTickets = () => {
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellationModal, setCancellationModal] = useState({
+    isOpen: false,
+    ticketId: null as number | null,
+    ticketDetails: null as TicketResponse | null,
+    isLoading: false,
+    cancellationResult: null as CancellationResponse | null
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -37,23 +46,51 @@ const BookedTickets = () => {
       .catch(() => setLoading(false));
   }, []);
 
-  const handleCancel = (ticket_id: number) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    console.log(`Cancelling ticket with ID: ${ticket_id}`);
+  const handleCancel = (ticket: TicketResponse) => {
+    setCancellationModal({
+      isOpen: true,
+      ticketId: ticket.ticket_id,
+      ticketDetails: ticket,
+      isLoading: false,
+      cancellationResult: null
+    });
+  };
+
+  const handleConfirmCancellation = async () => {
+    if (!cancellationModal.ticketId) return;
     
-    axios.put(`http://localhost:6111/tickets/cancel/${ticket_id}`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => {
-        if (res.status === 200) {
-          setTickets(tickets.map(ticket =>
-            ticket.ticket_id === ticket_id
-              ? { ...ticket, status: "CANCELLED" as TicketStatus }
-              : ticket
-          ));
-        }
-      });
+    setCancellationModal(prev => ({ ...prev, isLoading: true }));
+    
+    try {
+      const result = await cancelTicketWithRefund(cancellationModal.ticketId);
+      
+      // Update the ticket status to CANCELLED in the local state
+      setTickets(tickets.map(ticket =>
+        ticket.ticket_id === cancellationModal.ticketId
+          ? { ...ticket, status: "CANCELLED" as TicketStatus }
+          : ticket
+      ));
+      
+      setCancellationModal(prev => ({ 
+        ...prev, 
+        isLoading: false,
+        cancellationResult: result
+      }));
+      
+    } catch (error) {
+      console.error('Cancellation failed:', error);
+      setCancellationModal(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  const handleModalClose = () => {
+    setCancellationModal({
+      isOpen: false,
+      ticketId: null,
+      ticketDetails: null,
+      isLoading: false,
+      cancellationResult: null
+    });
   };
 
   if (loading) return (
@@ -104,9 +141,9 @@ const BookedTickets = () => {
                 {ticket.status !== "CANCELLED" && (
                   <button
                     className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-semibold py-2 px-4 rounded-xl shadow transition"
-                    onClick={() => handleCancel(ticket.ticket_id)}
+                    onClick={() => handleCancel(ticket)}
                   >
-                    Cancel
+                    Cancel & Refund
                   </button>
                 )}
               </div>
@@ -114,6 +151,18 @@ const BookedTickets = () => {
           ))}
         </div>
       )}
+      
+      {/* Cancellation Modal */}
+      <CancellationModal
+        isOpen={cancellationModal.isOpen}
+        onClose={handleModalClose}
+        onConfirm={handleConfirmCancellation}
+        ticketNumber={cancellationModal.ticketDetails?.ticketNumber}
+        trainName={cancellationModal.ticketDetails?.trainName}
+        amount={cancellationModal.ticketDetails?.amount}
+        isLoading={cancellationModal.isLoading}
+        cancellationResult={cancellationModal.cancellationResult}
+      />
     </div>
   );
 };

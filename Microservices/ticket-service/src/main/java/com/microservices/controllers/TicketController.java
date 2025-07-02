@@ -1,5 +1,6 @@
 package com.microservices.controllers;
 
+import com.microservices.dto.CancellationResponseDTO;
 import com.microservices.dto.TicketRequestDTO;
 import com.microservices.dto.TicketResponseDTO;
 import com.microservices.exception.TicketException;
@@ -43,6 +44,18 @@ public class TicketController {
             return ResponseEntity.ok(result);
         } catch (TicketException e) {
             logger.error("Cancellation failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/cancel-with-refund/{ticketId}")
+    public ResponseEntity<?> cancelTicketWithRefund(@PathVariable Long ticketId) {
+        try {
+            CancellationResponseDTO result = ticketService.cancelTicketWithRefund(ticketId);
+            logger.info("Ticket cancelled with refund details: {}", ticketId);
+            return ResponseEntity.ok(result);
+        } catch (TicketException e) {
+            logger.error("Cancellation with refund failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }

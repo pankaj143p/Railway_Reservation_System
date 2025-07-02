@@ -78,7 +78,9 @@ const LoginForm = () => {
             </div>
             <div className="input-block">
               <span className="forgot">
-                <a href="/signup">Don't have an account? Sign up</a>
+                <p className='text-blue-900'>Don't have an account?</p>
+                <a href="/signup">Sign up</a>
+
               </span>
               <button type="submit">Submit</button>
             </div>

@@ -19,6 +19,8 @@ public class TicketBooking {
     @Column(name = "order_id", unique = true, nullable = false)
     private String orderId;
 
+    private String paymentId; // Razorpay payment ID for refunds
+
     @NotBlank(message = "Full name is required")
     private String fullName;
 

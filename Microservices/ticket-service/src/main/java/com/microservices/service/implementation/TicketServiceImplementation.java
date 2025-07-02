@@ -3,6 +3,7 @@ package com.microservices.service.implementation;
 import com.microservices.component.KafkaProducerService;
 import com.microservices.component.Methods;
 import com.microservices.domain.TicketStatus;
+import com.microservices.dto.CancellationResponseDTO;
 import com.microservices.dto.TicketBookedEvent;
 import com.microservices.dto.TicketRequestDTO;
 import com.microservices.dto.TicketResponseDTO;
@@ -59,7 +60,7 @@ public class TicketServiceImplementation implements TicketService {
         // 3. Fetch train details
         TrainDTO train = trainClient.getTrainById(train_id);
 
-        // 4. Save ticket
+        // 4. Book the ticket
         TicketBooking ticket = new TicketBooking();
         ticket.setAmount(request.getAmount());
         ticket.setFullName(request.getFullName());
@@ -76,6 +77,7 @@ public class TicketServiceImplementation implements TicketService {
         ticket.setStatus(TicketStatus.CONFIRMED);
         ticket.setNoOfSeats(request.getSeatCount());
         ticket.setOrderId(orderId);
+        ticket.setPaymentId(paymentId); // Store payment ID for refunds
 
         ticketRepository.save(ticket);
 
@@ -149,14 +151,119 @@ public class TicketServiceImplementation implements TicketService {
                 logger.warn("Ticket is pending confirmation: {}", ticketId);
                 return "Ticket "+ticket.getTicketNumber()+" is pending, Please confirm it";
             }
+
+            // Process refund if payment ID exists
+            String refundMessage = "";
+            if (ticket.getPaymentId() != null && !ticket.getPaymentId().isEmpty()) {
+                try {
+                    // Calculate refund amount (in paise - Razorpay uses paise)
+                    int refundAmount = ticket.getAmount() * 100;
+                    
+                    // Call payment service to process refund
+                    String refundId = paymentClient.refundPayment(ticket.getPaymentId(), refundAmount);
+                    logger.info("Refund processed for ticket {}: refundId={}", ticketId, refundId);
+                    refundMessage = " Refund of ₹" + ticket.getAmount() + " has been initiated and will be processed within 5-7 business days.";
+                } catch (Exception e) {
+                    logger.error("Refund failed for ticket {}: {}", ticketId, e.getMessage());
+                    refundMessage = " Refund processing failed. Please contact support.";
+                }
+            }
+
+            // Update ticket status and increase train seats
             trainClient.increaseSeats(ticket.getTrainId(), ticket.getNoOfSeats());
             ticket.setStatus(TicketStatus.CANCELLED);
             ticketRepository.save(ticket);
             logger.info("Ticket cancelled: {}", ticketId);
-            return "Ticket with ticket number "+ticket.getTicketNumber()+" has been cancelled ";
+            
+            return "Ticket with ticket number "+ticket.getTicketNumber()+" has been cancelled." + refundMessage;
         }
         logger.warn("Ticket not found for cancellation: {}", ticketId);
         throw new TicketException("Ticket not found");
+    }
+
+    @Override
+    public CancellationResponseDTO cancelTicketWithRefund(Long ticketId) {
+        Optional<TicketBooking> otp = ticketRepository.findById(ticketId);
+        if(!otp.isPresent()){
+            logger.warn("Ticket not found for cancellation: {}", ticketId);
+            throw new TicketException("Ticket not found");
+        }
+
+        TicketBooking ticket = otp.get();
+        
+        if(ticket.getStatus() == TicketStatus.CANCELLED) {
+            logger.warn("Ticket already cancelled: {}", ticketId);
+            return new CancellationResponseDTO("Ticket "+ticket.getTicketNumber()+" already cancelled!");
+        }
+        
+        if(ticket.getStatus() == TicketStatus.WAITING){
+            logger.warn("Ticket is pending confirmation: {}", ticketId);
+            return new CancellationResponseDTO("Ticket "+ticket.getTicketNumber()+" is pending, Please confirm it");
+        }
+
+        // Process refund if payment ID exists
+        boolean refundProcessed = false;
+        String refundId = null;
+        double refundAmount = 0.0;
+        String refundStatus = "NOT_APPLICABLE";
+        String expectedRefundTime = "N/A";
+
+        if (ticket.getPaymentId() != null && !ticket.getPaymentId().isEmpty()) {
+            try {
+                // Calculate refund amount with 20% cancellation fee (user gets 80%)
+                double cancellationFeeRate = 0.20; // 20% cancellation fee
+                double refundRate = 0.80; // 80% refund to user
+                
+                double originalAmount = ticket.getAmount();
+                refundAmount = originalAmount * refundRate; // 80% of original amount
+                double cancellationFee = originalAmount * cancellationFeeRate; // 20% kept as fee
+                
+                // Convert to paise for Razorpay (multiply by 100)
+                int refundAmountPaise = (int) (refundAmount * 100);
+                
+                logger.info("Processing refund for ticket {}: Original=₹{}, Refund=₹{}, CancellationFee=₹{}", 
+                           ticketId, originalAmount, refundAmount, cancellationFee);
+                
+                // Call payment service to process refund
+                refundId = paymentClient.refundPayment(ticket.getPaymentId(), refundAmountPaise);
+                logger.info("Refund processed for ticket {}: refundId={}, amount=₹{}", ticketId, refundId, refundAmount);
+                
+                refundProcessed = true;
+                refundStatus = "INITIATED";
+                expectedRefundTime = "5-7 business days";
+            } catch (Exception e) {
+                logger.error("Refund failed for ticket {}: {}", ticketId, e.getMessage());
+                refundStatus = "FAILED";
+                expectedRefundTime = "Please contact support";
+            }
+        }
+
+        // Update ticket status and increase train seats
+        trainClient.increaseSeats(ticket.getTrainId(), ticket.getNoOfSeats());
+        ticket.setStatus(TicketStatus.CANCELLED);
+        ticketRepository.save(ticket);
+        logger.info("Ticket cancelled: {}", ticketId);
+        
+        // Calculate cancellation fee for response
+        double originalAmount = ticket.getAmount();
+        double cancellationFee = refundProcessed ? originalAmount * 0.20 : 0.0;
+        
+        String message = String.format("Ticket %s cancelled successfully. %s", 
+                                      ticket.getTicketNumber(),
+                                      refundProcessed ? 
+                                        String.format("Refund: ₹%.2f (after 20%% cancellation fee)", refundAmount) :
+                                        "No refund applicable.");
+        
+        return new CancellationResponseDTO(
+            message, 
+            refundProcessed, 
+            refundId, 
+            refundAmount, 
+            originalAmount,
+            cancellationFee,
+            refundStatus, 
+            expectedRefundTime
+        );
     }
 
     @Override

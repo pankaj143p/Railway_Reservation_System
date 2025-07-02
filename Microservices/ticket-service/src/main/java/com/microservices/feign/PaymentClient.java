@@ -12,4 +12,7 @@ public interface PaymentClient {
 
     @PostMapping("/verify")
     boolean verifyPayment(@RequestParam("orderId") String orderId, @RequestParam("paymentId") String paymentId, @RequestParam("razorpaySign") String razorpaySign);
+    
+    @PostMapping("/refund")
+    String refundPayment(@RequestParam("paymentId") String paymentId, @RequestParam("amount") int amount);
 }
