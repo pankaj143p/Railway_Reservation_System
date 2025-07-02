@@ -23,7 +23,7 @@ export const addUser = async (user: Partial<User>): Promise<User> => {
 
 export const updateUser = async (id: number, user: Partial<User>): Promise<User> => {
   const token = getToken();
-  const res = await axios.put(`${API_URL}/${id}`, user, {
+  const res = await axios.put(`${API_URL}/api/users/${id}`, user, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return res.data;
@@ -31,7 +31,7 @@ export const updateUser = async (id: number, user: Partial<User>): Promise<User>
 
 export const deleteUser = async (id: number): Promise<void> => {
   const token = getToken();
-  await axios.delete(`${API_URL}/${id}`, {
+  await axios.delete(`${API_URL}/api/users/${id}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
 };

@@ -25,7 +25,7 @@ export const fetchTrains = async (): Promise<Train[]> =>{
 
 export const addTrain = async (train: Partial<Train>): Promise<Train> =>{
     const token = getToken();
-    const response = await axios.post(`${API_URL}/add`, train, {
+    const response = await axios.post(`${API_URL}/trains/add`, train, {
         headers: {Authorization : `Bearer ${token}`}
     });
     return response.data;
@@ -33,14 +33,14 @@ export const addTrain = async (train: Partial<Train>): Promise<Train> =>{
 
 export const deleteTrain = async (id: number): Promise<void> => {
     const token = getToken();
-    await axios.delete(`${API_URL}/delete/${id}`, {
+    await axios.delete(`${API_URL}/trains/delete/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
     });
 };
 
 export const updateTrain = async(id: number, train: Partial<Train>): Promise<Train> =>{
     const token = getToken();
-    const response = await axios.put(`${API_URL}/update/${id}`, train, {
+    const response = await axios.put(`${API_URL}/trains/update/${id}`, train, {
         headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
