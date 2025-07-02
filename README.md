@@ -300,7 +300,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Team
 
-- **Developer**: [Your Name]
+- **Developer**: [Pankaj Prajapati]
 - **Project Type**: Full-Stack Railway Reservation System
 - **Academic Project**: Case Study Implementation
 
