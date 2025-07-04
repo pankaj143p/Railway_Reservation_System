@@ -4,6 +4,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
 import { jwtDecode } from "jwt-decode";
+import Toast from "../common/Toast";
+import { useToast } from "../../hooks/useToast";
+const tokenT = localStorage.getItem("token");
+
 
 declare global {
   interface Window {
@@ -17,6 +21,7 @@ const TicketConfirm = ({ onSubmit }: UserFormProps) => {
   const { trainId } = useParams<{ trainId: string }>();
   // const { userId } = useParams<{ userId: string }>();
  const token = localStorage.getItem("token");
+  const { toast, showToast, hideToast } = useToast();
   let userEmail: string | undefined = undefined;
   if (token) {
     try {
@@ -74,6 +79,7 @@ const TicketConfirm = ({ onSubmit }: UserFormProps) => {
         })
         .catch(err => {
           setError("Failed to fetch train details.");
+          showToast("Please login first before booking a ticket", "error");
           console.log("Error fetching train details:", err);
           
         });
@@ -197,6 +203,12 @@ const TicketConfirm = ({ onSubmit }: UserFormProps) => {
 
   return (
     <StyledWrapper>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        show={toast.show}
+        onClose={hideToast}
+      />
       <div className="container">
         <form className="form" onSubmit={handleSubmit} autoComplete="off">
           <h2 className="form-title">Book Your Ticket</h2>

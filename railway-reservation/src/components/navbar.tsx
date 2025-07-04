@@ -76,6 +76,9 @@ const Navbar = () => {
                   <Link to="/home" className={getLinkClasses("/home")}>
                     Home
                   </Link>
+                    <Link to="/trainList" className={getLinkClasses("/about", true)}>
+                Search Trains
+              </Link>
 
                   {isLogged ? (
                     <Link to="/bookedtickets" className={getLinkClasses("/bookedtickets")}>
@@ -112,6 +115,9 @@ const Navbar = () => {
           <Link to="/home" className={getLinkClasses("/home", true)}>
             Home
           </Link>
+             <Link to="/trainList" className={getLinkClasses("/about", true)}>
+                Search Trains
+              </Link>
           {isLogged ? (
             <Link to="/bookedtickets" className={getLinkClasses("/bookedtickets", true)}>
               Booked Tickets

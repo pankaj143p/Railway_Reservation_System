@@ -6,15 +6,15 @@ const TRAIN_SERVICE_URL = import.meta.env.VITE_API_GATEWAY_URL;
 export const fetchTrainList = async () => {
   try {
     const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("No authentication token found.");
-    }
+    // if (!token) {
+    //   throw new Error("No authentication token found.");
+    // }
 
     const response = await fetch(`${TRAIN_SERVICE_URL}/trains/all`, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+        // Authorization: `Bearer ${token}`,
       },
     });
 
@@ -23,6 +23,8 @@ export const fetchTrainList = async () => {
     }
 
     const data = await response.json();
+    console.log("datat ", data);
+    
     return data;
   } catch (error) {
     console.error("Error fetching train list:", error);
