@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { fetchTrainList } from "../../services/trainService";
 import { Train } from "../../interfaces/Train";
 import Card from "../../components/ui/card/Card";
@@ -13,7 +12,6 @@ const TrainDetails = () => {
   const [sourceStation, setSourceStation] = useState("");
   const [destinationStation, setDestinationStation] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const getTrains = async () => {
@@ -57,10 +55,6 @@ const TrainDetails = () => {
     } finally {
       setIsSearching(false);
     }
-  };
-
-  const handleBooking = (trainId: number) => {
-    navigate(`/book/${trainId}`);
   };
 
   const clearSearch = () => {
@@ -146,7 +140,6 @@ const TrainDetails = () => {
             <Card
               key={train.trainId}
               train={train}
-              onBook={() => handleBooking(train.trainId)}
             />
           ))
         ) : (
