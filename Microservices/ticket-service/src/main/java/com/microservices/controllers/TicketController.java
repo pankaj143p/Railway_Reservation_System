@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -115,6 +116,19 @@ public class TicketController {
         } catch (TicketException e) {
             logger.error("Fetch by user email failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/availability/{trainId}")
+    public ResponseEntity<?> getAvailableSeats(@PathVariable Long trainId, @RequestParam String date) {
+        try {
+            LocalDate localDate = LocalDate.parse(date);
+            int bookedSeats = ticketService.getBookedSeatsCountByTrainAndDate(trainId, localDate);
+            logger.info("Fetched booked seats count for train {} on date {}: {}", trainId, date, bookedSeats);
+            return ResponseEntity.ok(bookedSeats);
+        } catch (Exception e) {
+            logger.error("Error fetching seat availability: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error fetching seat availability");
         }
     }
 }

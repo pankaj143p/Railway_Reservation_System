@@ -5,6 +5,7 @@ import com.microservices.dto.TicketRequestDTO;
 import com.microservices.dto.TicketResponseDTO;
 import com.microservices.model.TicketBooking;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface TicketService {
@@ -17,6 +18,7 @@ public interface TicketService {
     TicketBooking getTicketByOrderId(String orderId);
     TicketBooking updateTicket(Long id, TicketBooking updatedTicket);
     List<TicketBooking> getTicketByUserEmail(String userEmail);
+    int getBookedSeatsCountByTrainAndDate(Long trainId, LocalDate date);
 }
 
 

@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -303,6 +304,13 @@ public class TicketServiceImplementation implements TicketService {
         }
         logger.info("Fetched tickets for user email: {}", userEmail);
         return tickets;
+    }
+
+    @Override
+    public int getBookedSeatsCountByTrainAndDate(Long trainId, LocalDate date) {
+        logger.info("Fetching booked seats count for train {} on date {}", trainId, date);
+        Integer bookedSeats = ticketRepository.getBookedSeatsCountByTrainAndDate(trainId, date);
+        return bookedSeats != null ? bookedSeats : 0;
     }
 
 }

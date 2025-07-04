@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { UserFormProps } from "../../interfaces/form";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
 import { jwtDecode } from "jwt-decode";
+import Toast from "../common/Toast";
+import { useToast } from "../../hooks/useToast";
+
 
 declare global {
   interface Window {
@@ -17,6 +20,7 @@ const TicketConfirm = ({ onSubmit }: UserFormProps) => {
   const { trainId } = useParams<{ trainId: string }>();
   // const { userId } = useParams<{ userId: string }>();
  const token = localStorage.getItem("token");
+  const { toast, showToast, hideToast } = useToast();
   let userEmail: string | undefined = undefined;
   if (token) {
     try {
@@ -44,6 +48,8 @@ const TicketConfirm = ({ onSubmit }: UserFormProps) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showSeatAlert, setShowSeatAlert] = useState(false);
+  const [searchParams] = useSearchParams();
+  const selectedDate = searchParams.get("date") || undefined;
 
   useEffect(() => {
     if (trainId) {
@@ -74,6 +80,7 @@ const TicketConfirm = ({ onSubmit }: UserFormProps) => {
         })
         .catch(err => {
           setError("Failed to fetch train details.");
+          showToast("Please login first before booking a ticket", "error");
           console.log("Error fetching train details:", err);
           
         });
@@ -197,9 +204,25 @@ const TicketConfirm = ({ onSubmit }: UserFormProps) => {
 
   return (
     <StyledWrapper>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        show={toast.show}
+        onClose={hideToast}
+      />
       <div className="container">
         <form className="form" onSubmit={handleSubmit} autoComplete="off">
           <h2 className="form-title">Book Your Ticket</h2>
+          {selectedDate && (
+            <div className="selected-date">
+              <span>Travel Date: <strong>{new Date(selectedDate).toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}</strong></span>
+            </div>
+          )}
           {error && <p className="error">{error}</p>}
           {success && <p className="success">{success}</p>}
           {showSeatAlert && (
@@ -399,6 +422,17 @@ const StyledWrapper = styled.div`
     background: #fff3cd;
     color: #856404;
     border: 1px solid #ffeeba;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: 1em;
+  }
+
+  .selected-date {
+    background: #e7f3ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     border-radius: 6px;
     padding: 10px;
     margin-bottom: 10px;
