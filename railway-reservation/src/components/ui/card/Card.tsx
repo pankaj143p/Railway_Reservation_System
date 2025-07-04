@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Train } from "../../../interfaces/Train";
+<<<<<<< HEAD
 import Calendar from "../../common/Calender";
+=======
+import Calendar from "../../common/Calendar";
+>>>>>>> 60920cfa05a277b640fdadc4e418b0d728b5877d
 
 interface CardProps {
   train: Train;
