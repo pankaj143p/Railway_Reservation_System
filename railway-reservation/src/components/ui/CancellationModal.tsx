@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { CancellationResponse } from '../../services/api/cancellationService';
 
 interface CancellationModalProps {

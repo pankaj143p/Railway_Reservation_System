@@ -90,9 +90,9 @@ export const deleteUser = async (id: number): Promise<any> => {
   try {
     const token = getToken();
     console.log(`Deleting user with ID: ${id}`);
-    const res = await axios.delete(`${API_URL}/api/users/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+  const res = await axios.patch(`${API_URL}/api/users/${id}`,{}, {
+  headers: { Authorization: `Bearer ${token}` }
+});
     console.log('User deleted successfully:', res.data);
     return res.data;
   } catch (error) {

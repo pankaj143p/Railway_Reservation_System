@@ -81,7 +81,7 @@ const Navbar = () => {
               </Link>
 
                   {isLogged ? (
-                    <Link to="/bookedtickets" className={getLinkClasses("/bookedtickets")}>
+                    <Link to="/bookedtickets" className={getLinkClasses("/bookedtickets", true)}>
                       Booked Tickets
                     </Link>
                   ) : (

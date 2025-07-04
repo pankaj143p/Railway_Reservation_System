@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import axios from 'axios';
+// import React, { useState, useEffect } from 'react';
+// import styled from 'styled-components';
+// import axios from 'axios';
 
-interface CalendarProps {
-  trainId: string;
-  trainDetails: any;
-  onDateSelect: (date: string) => void;
-  onClose: () => void;
-}
+// interface CalendarProps {
+//   trainId: string;
+//   trainDetails: any;
+//   onDateSelect: (date: string) => void;
+//   onClose: () => void;
+// }
 
-interface SeatAvailability {
-  date: string;
-  availableSeats: number;
-  bookedSeats: number;
-  totalSeats: number;
-  status: 'available' | 'full' | 'unavailable' | 'train-not-operational';
-  operationalReason?: string; // Reason why train is not operational (maintenance, cancelled, etc.)
-}
+// interface SeatAvailability {
+//   date: string;
+//   availableSeats: number;
+//   bookedSeats: number;
+//   totalSeats: number;
+//   status: 'available' | 'full' | 'unavailable' | 'train-not-operational';
+//   operationalReason?: string; // Reason why train is not operational (maintenance, cancelled, etc.)
+// }
 
 // const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect, onClose }) => {
 //   const [currentMonth, setCurrentMonth] = useState(new Date());
