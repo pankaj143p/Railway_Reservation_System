@@ -12,6 +12,7 @@ const TrainDetails = () => {
   const [sourceStation, setSourceStation] = useState("");
   const [destinationStation, setDestinationStation] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [validationError, setValidationError] = useState("");
 
   useEffect(() => {
     const getTrains = async () => {
@@ -25,6 +26,16 @@ const TrainDetails = () => {
   }, []);
 
   const handleSearch = async () => {
+    // Clear any previous validation errors
+    setValidationError("");
+    
+    // Validate that source and destination are not the same
+    if (sourceStation && destinationStation && 
+        sourceStation.toLowerCase().trim() === destinationStation.toLowerCase().trim()) {
+      setValidationError("Source and destination stations cannot be the same!");
+      return;
+    }
+    
     setIsSearching(true);
     
     try {
@@ -57,17 +68,70 @@ const TrainDetails = () => {
     }
   };
 
+  // Handle source station change with validation
+  const handleSourceChange = (value: string) => {
+    setSourceStation(value);
+    // Clear validation error if stations are now different
+    if (validationError && value.toLowerCase().trim() !== destinationStation.toLowerCase().trim()) {
+      setValidationError("");
+    }
+  };
+
+  // Handle destination station change with validation  
+  const handleDestinationChange = (value: string) => {
+    setDestinationStation(value);
+    // Clear validation error if stations are now different
+    if (validationError && sourceStation.toLowerCase().trim() !== value.toLowerCase().trim()) {
+      setValidationError("");
+    }
+  };
+
   const clearSearch = () => {
     setSearchQuery("");
     setSearchDate("");
     setSourceStation("");
     setDestinationStation("");
+    setValidationError("");
     setFilteredTrains(trains);
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-8 bg-gray-100 pt-20">
       <h1 className="text-3xl font-bold text-cyan-600 mb-6 text-center">Search Trains</h1>
+      
+      {/* Validation Error Alert */}
+      {validationError && (
+        <div className="w-full max-w-4xl mb-4">
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md shadow-sm">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-red-800">
+                  {validationError}
+                </p>
+              </div>
+              <div className="ml-auto pl-3">
+                <div className="-mx-1.5 -my-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setValidationError("")}
+                    className="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600 transition-colors"
+                  >
+                    <span className="sr-only">Dismiss</span>
+                    <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Enhanced Search Form */}
       <div className="bg-gradient-to-l from-cyan-100 to-gray-100 rounded-lg shadow-md p-4 mb-8 w-full max-w-4xl">
@@ -77,7 +141,7 @@ const TrainDetails = () => {
             <input
               type="text"
               value={sourceStation}
-              onChange={e => setSourceStation(e.target.value)}
+              onChange={e => handleSourceChange(e.target.value)}
               placeholder="Source station"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
@@ -88,7 +152,7 @@ const TrainDetails = () => {
             <input
               type="text"
               value={destinationStation}
-              onChange={e => setDestinationStation(e.target.value)}
+              onChange={e => handleDestinationChange(e.target.value)}
               placeholder="Destination station"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
             />

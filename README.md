@@ -12,6 +12,7 @@ A comprehensive full-stack railway reservation system built with React, TypeScri
 
 ### 🎫 **Booking & Reservations**
 - **Smart Train Search**: Advanced search with date range, source/destination filtering
+- **Input Validation**: Beautiful alerts for invalid search criteria (e.g., same source/destination)
 - **Real-time Seat Availability**: Live seat checking and booking
 - **Multiple Passenger Booking**: Support for group bookings
 - **Seat Preferences**: Window/aisle seat selection
@@ -25,6 +26,8 @@ A comprehensive full-stack railway reservation system built with React, TypeScri
 
 ### 📱 **User Experience**
 - **Responsive Design**: Mobile-first approach with Tailwind CSS
+- **Smart Form Validation**: Real-time validation with beautiful error alerts
+- **Interactive UI Components**: Professional alerts with dismiss functionality
 - **Dark/Light Theme**: User preference-based theming
 - **Real-time Notifications**: Live updates via Kafka messaging
 - **Progressive Web App**: Offline capability and mobile installation
@@ -293,6 +296,21 @@ docker-compose up --build
 3. **Commit changes** (`git commit -m 'Add amazing feature'`)
 4. **Push to branch** (`git push origin feature/amazing-feature`)
 5. **Open Pull Request**
+
+## 🆕 Recent Updates
+
+### Version 2.1.0 - Enhanced User Experience
+- ✅ **Smart Form Validation**: Added beautiful validation alerts for train search
+- ✅ **Source/Destination Validation**: Prevents searching with identical source and destination
+- ✅ **Real-time Error Clearing**: Auto-dismiss validation errors when user corrects input
+- ✅ **Professional Alert UI**: Dismissible alerts with smooth animations and accessibility support
+- ✅ **Improved UX Flow**: Enhanced user interaction patterns for better usability
+
+### Previous Updates
+- ✅ **Microservices Architecture**: Complete service separation and API Gateway integration
+- ✅ **Payment Integration**: Razorpay payment gateway implementation
+- ✅ **Real-time Updates**: Kafka messaging for live notifications
+- ✅ **Admin Dashboard**: Comprehensive admin controls and analytics
 
 ## 📄 License
 
