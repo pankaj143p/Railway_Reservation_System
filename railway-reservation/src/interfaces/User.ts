@@ -7,4 +7,5 @@ export interface User {
   password?: string;
   createdAt: string;
   updatedAt: string;
+  isActive?: boolean; // New field for soft delete functionality
 }

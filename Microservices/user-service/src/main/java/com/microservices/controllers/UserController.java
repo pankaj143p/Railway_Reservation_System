@@ -54,7 +54,7 @@ public class UserController {
 
 
     // Get all users
-    @GetMapping("/all")
+    @GetMapping()
     public ResponseEntity<List<User>> getAllUser() {
         List<User> users = userSer.getAllUsers();
         logger.info("Fetched all users, count: {}", users.size());

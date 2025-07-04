@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Data
 @Entity
+@Table(name = "user_details")
 public class User {
 
      @Id
@@ -40,6 +41,10 @@ public class User {
 
      private String resetToken;
      private LocalDateTime resetTokenExpiry;
+
+     // New field for soft delete functionality
+     @Column(nullable = false, columnDefinition = "boolean default true")
+     private Boolean isActive = true;
 
      @PrePersist
      public void onCreate() {
