@@ -20,6 +20,9 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
     arrivalTime: "",
     date: "",
     routes: [],
+    operationalStatus: "OPERATIONAL",
+    maintenanceNotes: "",
+    isActive: true,
   });
 
   // Dynamic routes state
@@ -40,13 +43,16 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
             arrivalTime: "",
             date: "",
             routes: [],
+            operationalStatus: "OPERATIONAL",
+            maintenanceNotes: "",
+            isActive: true,
           }
     );
     setRoutes(initialData?.routes && initialData.routes.length > 0 ? [...initialData.routes] : [""]);
   }, [initialData, open]);
 
   // Handle input changes and ensure numbers are numbers
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     if (type === "number") {
       setForm({ ...form, [name]: value === "" ? "" : Number(value) });
@@ -90,6 +96,9 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
       arrivalTime: formatTime(form.arrivalTime || ""),
       date: form.date, // input type="date" gives "YYYY-MM-DD"
       routes: cleanedRoutes,
+      operationalStatus: form.operationalStatus || "OPERATIONAL",
+      maintenanceNotes: form.maintenanceNotes || "",
+      isActive: form.isActive !== undefined ? form.isActive : true,
     });
     onClose();
   };
@@ -117,6 +126,36 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
           <input name="departureTime" type="time" value={form.departureTime || ""} onChange={handleChange} placeholder="Departure Time" className="border rounded px-3 py-2 bg-white/60" required />
           <input name="arrivalTime" type="time" value={form.arrivalTime || ""} onChange={handleChange} placeholder="Arrival Time" className="border rounded px-3 py-2 bg-white/60" required />
           <input name="date" type="date" value={form.date || ""} onChange={handleChange} placeholder="Journey Date" className="border rounded px-3 py-2 bg-white/60" required />
+
+          {/* New Operational Status Field */}
+          <div>
+            <label className="block mb-1 font-medium text-blue-900">Operational Status</label>
+            <select
+              name="operationalStatus"
+              value={form.operationalStatus || "OPERATIONAL"}
+              onChange={handleChange}
+              className="border rounded px-3 py-2 bg-white/60 w-full"
+              required
+            >
+              <option value="OPERATIONAL">Operational</option>
+              <option value="MAINTENANCE">Under Maintenance</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="DELAYED">Delayed</option>
+            </select>
+          </div>
+
+          {/* New Maintenance Notes Field */}
+          <div>
+            <label className="block mb-1 font-medium text-blue-900">Maintenance Notes</label>
+            <textarea
+              name="maintenanceNotes"
+              value={form.maintenanceNotes || ""}
+              onChange={handleChange}
+              placeholder="Enter maintenance notes, delays, or other operational details..."
+              className="border rounded px-3 py-2 bg-white/60 w-full min-h-[80px] resize-y"
+              rows={3}
+            />
+          </div>
 
           <div>
             <label className="block mb-1 font-medium text-blue-900">Routes</label>

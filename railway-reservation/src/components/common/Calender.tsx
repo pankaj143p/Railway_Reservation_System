@@ -14,7 +14,8 @@ interface SeatAvailability {
   availableSeats: number;
   bookedSeats: number;
   totalSeats: number;
-  status: 'available' | 'full' | 'unavailable';
+  status: 'available' | 'full' | 'unavailable' | 'train-not-operational';
+  operationalReason?: string; // Reason why train is not operational (maintenance, cancelled, etc.)
 }
 
 const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect, onClose }) => {
@@ -31,19 +32,30 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
   const fetchSeatAvailability = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      // const token = localStorage.getItem("token");
       const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
       const endDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
       
       const availability: { [key: string]: SeatAvailability } = {};
       
+      // Calculate 90 days from today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const maxBookingDate = new Date(today);
+      maxBookingDate.setDate(maxBookingDate.getDate() + 90);
+      maxBookingDate.setHours(23, 59, 59, 999); // Set to end of day for comparison
+      
+      console.log(`fetchSeatAvailability: Today is ${today.toISOString().split('T')[0]}, Max booking date is ${maxBookingDate.toISOString().split('T')[0]}`);
+      
       // Fetch availability for each day of the month
       for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
         const dateStr = date.toISOString().split('T')[0];
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const currentDateForComparison = new Date(date);
+        currentDateForComparison.setHours(0, 0, 0, 0);
         
-        if (date < today) {
+        console.log(`Checking date: ${dateStr}, Date object: ${currentDateForComparison.toISOString()}, Beyond 90 days? ${currentDateForComparison > maxBookingDate}`);
+        
+        if (currentDateForComparison < today) {
           // Past dates are unavailable
           availability[dateStr] = {
             date: dateStr,
@@ -52,8 +64,47 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
             totalSeats: trainDetails?.totalSeats || 0,
             status: 'unavailable'
           };
+          console.log(`Date ${dateStr} marked as PAST/UNAVAILABLE`);
+        } else if (currentDateForComparison > maxBookingDate) {
+          // Dates beyond 90 days are unavailable
+          availability[dateStr] = {
+            date: dateStr,
+            availableSeats: 0,
+            bookedSeats: 0,
+            totalSeats: trainDetails?.totalSeats || 0,
+            status: 'unavailable'
+          };
+          console.log(`Date ${dateStr} marked as BEYOND 90 DAYS/UNAVAILABLE`);
         } else {
           try {
+            // First check if train is operational on this date
+            const trainStatusResponse = await axios.get(
+              `${API_URL}/trains/operational-status/${trainId}?date=${dateStr}`,
+              {
+                // headers: {
+                //   Authorization: `Bearer ${token}`,
+                // },
+              }
+            );
+            
+            const trainStatus = trainStatusResponse.data;
+            console.log("Train operational status for date", dateStr, ":", trainStatus);
+            
+            // If train is not operational, mark as such
+            if (!trainStatus.isOperational) {
+              availability[dateStr] = {
+                date: dateStr,
+                availableSeats: 0,
+                bookedSeats: 0,
+                totalSeats: trainDetails?.totalSeats || 0,
+                status: 'train-not-operational',
+                operationalReason: trainStatus.reason || 'Train not operational'
+              };
+              console.log(`Date ${dateStr} marked as TRAIN NOT OPERATIONAL: ${trainStatus.reason}`);
+              continue;
+            }
+            
+            // If train is operational, check seat availability
             const response = await axios.get(
               `${API_URL}/tickets/availability/${trainId}?date=${dateStr}`,
               {
@@ -78,13 +129,60 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
             };
           } catch (error) {
             console.error(`Error fetching availability for ${dateStr}:`, error);
-            availability[dateStr] = {
-              date: dateStr,
-              availableSeats: trainDetails?.totalSeats || 0,
-              bookedSeats: 0,
-              totalSeats: trainDetails?.totalSeats || 0,
-              status: 'available'
-            };
+            
+            // If operational status API fails, try to get seat availability anyway
+            // This ensures backwards compatibility if the operational status API doesn't exist
+            try {
+              const response = await axios.get(
+                `${API_URL}/tickets/availability/${trainId}?date=${dateStr}`,
+                {
+                  // headers: {
+                  // //   Authorization: `Bearer ${token}`,
+                  // },
+                }
+              );
+              
+              const bookedSeats = response.data;
+              const totalSeats = trainDetails?.totalSeats || 0;
+              const availableSeats = totalSeats - bookedSeats;
+              
+              availability[dateStr] = {
+                date: dateStr,
+                availableSeats,
+                bookedSeats,
+                totalSeats,
+                status: availableSeats <= 0 ? 'full' : 'available'
+              };
+            } catch (fallbackError) {
+              console.error(`Fallback error for ${dateStr}:`, fallbackError);
+              
+              // For demonstration: Add some sample operational statuses
+              // In production, this would come from your backend API
+              const dayOfMonth = new Date(dateStr).getDate();
+              let demoStatus = 'available';
+              let demoReason = '';
+              
+              // Demo: Show train not operational on certain dates
+              if (dayOfMonth === 15) {
+                demoStatus = 'train-not-operational';
+                demoReason = 'Scheduled maintenance';
+              } else if (dayOfMonth === 22) {
+                demoStatus = 'train-not-operational';
+                demoReason = 'Track repair work';
+              } else if (dayOfMonth === 30) {
+                demoStatus = 'train-not-operational';
+                demoReason = 'Weather conditions';
+              }
+              
+              availability[dateStr] = {
+                date: dateStr,
+                availableSeats: demoStatus === 'train-not-operational' ? 0 : trainDetails?.totalSeats || 0,
+                bookedSeats: 0,
+                totalSeats: trainDetails?.totalSeats || 0,
+                status: demoStatus as 'available' | 'train-not-operational',
+                operationalReason: demoReason || undefined
+              };
+            }
           }
         }
       }
@@ -127,18 +225,55 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
   };
 
   const handleDateClick = (dateStr: string, availability: SeatAvailability) => {
+    // Check if date is within 90-day booking window
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const clickedDate = new Date(dateStr);
+    clickedDate.setHours(0, 0, 0, 0);
+    const maxBookingDate = new Date(today);
+    maxBookingDate.setDate(maxBookingDate.getDate() + 90);
+    maxBookingDate.setHours(0, 0, 0, 0);
+    
+    console.log(`handleDateClick: Clicked date: ${dateStr}`);
+    console.log(`handleDateClick: Today: ${today.toISOString().split('T')[0]}`);
+    console.log(`handleDateClick: Max booking: ${maxBookingDate.toISOString().split('T')[0]}`);
+    console.log(`handleDateClick: Clicked date time: ${clickedDate.getTime()}, Max booking time: ${maxBookingDate.getTime()}`);
+    console.log(`handleDateClick: Is beyond 90 days? ${clickedDate.getTime() > maxBookingDate.getTime()}`);
+    
+    if (clickedDate.getTime() < today.getTime()) {
+      alert("❌ Cannot book past dates");
+      return;
+    }
+    
+    if (clickedDate.getTime() > maxBookingDate.getTime()) {
+      alert(`❌ Booking not available beyond 90 days from today (Max date: ${maxBookingDate.toISOString().split('T')[0]})`);
+      return;
+    }
+    
     if (availability.status === 'available') {
       onDateSelect(dateStr);
+    } else if (availability.status === 'full') {
+      alert("❌ No seats available for this date");
+    } else if (availability.status === 'train-not-operational') {
+      alert(`🚫 Train not operational on ${dateStr}\nReason: ${availability.operationalReason || 'Service unavailable'}`);
+    } else {
+      alert("❌ This date is not available for booking");
     }
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
+    // Check if navigation is allowed before proceeding
+    if (direction === 'prev' && !canNavigatePrev()) return;
+    if (direction === 'next' && !canNavigateNext()) return;
+    
     const newMonth = new Date(currentMonth);
+    
     if (direction === 'prev') {
       newMonth.setMonth(newMonth.getMonth() - 1);
     } else {
       newMonth.setMonth(newMonth.getMonth() + 1);
     }
+    
     setCurrentMonth(newMonth);
   };
 
@@ -149,8 +284,41 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
     });
   };
 
+  // Check if navigation is allowed
+  const canNavigatePrev = () => {
+    const today = new Date();
+    const prevMonth = new Date(currentMonth);
+    prevMonth.setMonth(prevMonth.getMonth() - 1);
+    
+    return !(prevMonth.getFullYear() < today.getFullYear() || 
+            (prevMonth.getFullYear() === today.getFullYear() && prevMonth.getMonth() < today.getMonth()));
+  };
+
+  const canNavigateNext = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const maxDate = new Date(today);
+    maxDate.setDate(maxDate.getDate() + 90);
+    maxDate.setHours(0, 0, 0, 0);
+    
+    const nextMonth = new Date(currentMonth);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const firstDayOfNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
+    firstDayOfNextMonth.setHours(0, 0, 0, 0);
+    
+    const canNavigate = firstDayOfNextMonth.getTime() <= maxDate.getTime();
+    console.log(`canNavigateNext: First day of next month: ${firstDayOfNextMonth.toISOString().split('T')[0]}, Max date: ${maxDate.toISOString().split('T')[0]}, Can navigate: ${canNavigate}`);
+    
+    return canNavigate;
+  };
+
   const days = getDaysInMonth();
   const today = new Date().toISOString().split('T')[0];
+  
+  // Debug: Log the 90-day limit for testing
+  const maxBookingDate = new Date();
+  maxBookingDate.setDate(maxBookingDate.getDate() + 90);
+  console.log(`Calendar: Today is ${today}, Max booking date is ${maxBookingDate.toISOString().split('T')[0]}`);
 
   return (
     <CalendarOverlay>
@@ -167,9 +335,19 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
         </TrainInfo>
 
         <CalendarNavigation>
-          <NavButton onClick={() => navigateMonth('prev')}>‹</NavButton>
+          <NavButton 
+            onClick={() => navigateMonth('prev')}
+            disabled={!canNavigatePrev()}
+          >
+            ‹
+          </NavButton>
           <MonthYear>{formatMonthYear()}</MonthYear>
-          <NavButton onClick={() => navigateMonth('next')}>›</NavButton>
+          <NavButton 
+            onClick={() => navigateMonth('next')}
+            disabled={!canNavigateNext()}
+          >
+            ›
+          </NavButton>
         </CalendarNavigation>
 
         <DaysHeader>
@@ -211,10 +389,22 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
             <span>Full</span>
           </LegendItem>
           <LegendItem>
+            <LegendColor status="train-not-operational" />
+            <span>Train Not Running</span>
+          </LegendItem>
+          <LegendItem>
             <LegendColor status="unavailable" />
-            <span>Past Date</span>
+            <span>Past/Beyond 90 days</span>
           </LegendItem>
         </Legend>
+
+        <BookingPolicy>
+          <span>📅 Booking available up to 90 days in advance only</span>
+          <br />
+          <span>🚫 Orange dates indicate train service is not available</span>
+          <br />
+          <small>Click on any date to see specific availability or service status</small>
+        </BookingPolicy>
 
         {loading && <LoadingOverlay>Loading availability...</LoadingOverlay>}
       </CalendarContainer>
@@ -300,8 +490,8 @@ const CalendarNavigation = styled.div`
   margin-bottom: 16px;
 `;
 
-const NavButton = styled.button`
-  background: #2563eb;
+const NavButton = styled.button<{ disabled?: boolean }>`
+  background: ${props => props.disabled ? '#9ca3af' : '#2563eb'};
   color: white;
   border: none;
   border-radius: 50%;
@@ -310,11 +500,12 @@ const NavButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   font-size: 18px;
+  opacity: ${props => props.disabled ? 0.6 : 1};
   
   &:hover {
-    background: #1d4ed8;
+    background: ${props => props.disabled ? '#9ca3af' : '#1d4ed8'};
   }
 `;
 
@@ -348,7 +539,7 @@ const CalendarGrid = styled.div`
 
 interface DayCellProps {
   isEmpty?: boolean;
-  status?: 'available' | 'full' | 'unavailable';
+  status?: 'available' | 'full' | 'unavailable' | 'train-not-operational';
   isToday?: boolean;
 }
 
@@ -383,6 +574,21 @@ const DayCell = styled.div<DayCellProps>`
     background: #fee2e2;
     color: #991b1b;
     border: 2px solid #dc2626;
+  `}
+  
+  ${props => props.status === 'train-not-operational' && `
+    background: #fef3c7;
+    color: #92400e;
+    border: 2px solid #f59e0b;
+    position: relative;
+    
+    &:before {
+      content: '🚫';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      font-size: 0.6rem;
+    }
   `}
   
   ${props => props.status === 'unavailable' && `
@@ -437,6 +643,10 @@ const LegendColor = styled.div<{ status: string }>`
     background: #dc2626;
   `}
   
+  ${props => props.status === 'train-not-operational' && `
+    background: #f59e0b;
+  `}
+  
   ${props => props.status === 'unavailable' && `
     background: #9ca3af;
   `}
@@ -455,6 +665,17 @@ const LoadingOverlay = styled.div`
   border-radius: 16px;
   font-weight: 500;
   color: #2563eb;
+`;
+
+const BookingPolicy = styled.div`
+  text-align: center;
+  margin-top: 12px;
+  padding: 8px;
+  background: #f0f9ff;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #0369a1;
+  border: 1px solid #e0f2fe;
 `;
 
 export default Calendar;

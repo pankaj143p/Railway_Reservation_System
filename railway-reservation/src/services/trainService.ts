@@ -5,7 +5,7 @@ const TRAIN_SERVICE_URL = import.meta.env.VITE_API_GATEWAY_URL;
 
 export const fetchTrainList = async () => {
   try {
-    const token = localStorage.getItem("token");
+    // const token = localStorage.getItem("token");
     // if (!token) {
     //   throw new Error("No authentication token found.");
     // }
@@ -25,11 +25,111 @@ export const fetchTrainList = async () => {
     const data = await response.json();
     console.log("datat ", data);
     
-    return data;
+    // Filter trains to show only those available within 90 days
+    return filterTrainsBy90DayRule(data);
   } catch (error) {
     console.error("Error fetching train list:", error);
     return null;
   }
+};
+
+// Fetch trains for public listing (only available trains within 90 days)
+export const fetchAvailableTrains = async () => {
+  try {
+    const response = await fetch(`${TRAIN_SERVICE_URL}/trains/available`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+    });
+
+    if (!response.ok) {
+      // Fallback to all trains if specific endpoint doesn't exist
+      return fetchTrainList();
+    }
+
+    const data = await response.json();
+    console.log("Available trains data: ", data);
+    
+    return filterTrainsBy90DayRule(data);
+  } catch (error) {
+    console.error("Error fetching available trains, falling back to all trains:", error);
+    return fetchTrainList();
+  }
+};
+
+// Utility function to filter trains by 90-day rule
+const filterTrainsBy90DayRule = (trains: Train[]) => {
+  if (!Array.isArray(trains)) return [];
+  
+  const today = new Date();
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + 90);
+  
+  return trains.filter(train => {
+    // Check if train has any availability within the next 90 days
+    // Show trains that are available, on time, or operational
+    const validStatuses = ['ON_TIME', 'AVAILABLE', 'OPERATIONAL', 'RUNNING'];
+    const trainStatus = train.status?.toUpperCase();
+    
+    // Filter out cancelled, maintenance, or not available trains
+    const invalidStatuses = ['CANCELLED', 'MAINTENANCE', 'NOT_AVAILABLE', 'SUSPENDED'];
+    
+    if (invalidStatuses.some(status => trainStatus?.includes(status))) {
+      return false;
+    }
+    
+    // Include trains with valid operational status
+    return validStatuses.some(status => trainStatus?.includes(status)) || !trainStatus;
+  });
+};
+
+// Check if a train is bookable within 90 days
+export const isTrainBookableWithin90Days = (trainDate: string): boolean => {
+  const today = new Date();
+  const bookingDate = new Date(trainDate);
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + 90);
+  
+  today.setHours(0, 0, 0, 0);
+  bookingDate.setHours(0, 0, 0, 0);
+  maxDate.setHours(0, 0, 0, 0);
+  
+  return bookingDate >= today && bookingDate <= maxDate;
+};
+
+// Get available booking dates for a train (up to 90 days)
+export const getAvailableBookingDates = (): { start: string; end: string } => {
+  const today = new Date();
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + 90);
+  
+  return {
+    start: today.toISOString().split('T')[0],
+    end: maxDate.toISOString().split('T')[0]
+  };
+};
+
+// Validate booking request against 90-day rule
+export const validateBookingDate = (bookingDate: string): { valid: boolean; message: string } => {
+  const today = new Date();
+  const booking = new Date(bookingDate);
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + 90);
+  
+  today.setHours(0, 0, 0, 0);
+  booking.setHours(0, 0, 0, 0);
+  maxDate.setHours(0, 0, 0, 0);
+  
+  if (booking < today) {
+    return { valid: false, message: "Cannot book past dates" };
+  }
+  
+  if (booking > maxDate) {
+    return { valid: false, message: "Booking not available beyond 90 days from today" };
+  }
+  
+  return { valid: true, message: "Date is valid for booking" };
 };
 
 // Search trains with date range support

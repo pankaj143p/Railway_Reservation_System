@@ -51,6 +51,33 @@ const TicketConfirm = ({ onSubmit }: UserFormProps) => {
   const [searchParams] = useSearchParams();
   const selectedDate = searchParams.get("date") || undefined;
 
+  // Validate 90-day booking rule
+  useEffect(() => {
+    if (selectedDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const travelDate = new Date(selectedDate);
+      travelDate.setHours(0, 0, 0, 0);
+      const maxBookingDate = new Date(today);
+      maxBookingDate.setDate(maxBookingDate.getDate() + 90);
+      maxBookingDate.setHours(0, 0, 0, 0);
+
+      console.log(`Booking validation: Travel date: ${selectedDate}, Today: ${today.toISOString().split('T')[0]}, Max booking: ${maxBookingDate.toISOString().split('T')[0]}`);
+
+      if (travelDate.getTime() < today.getTime()) {
+        showToast("❌ Cannot book past dates. Please select a valid travel date.", "error");
+        navigate("/trains");
+        return;
+      }
+
+      if (travelDate.getTime() > maxBookingDate.getTime()) {
+        showToast(`❌ Booking not available beyond 90 days from today. Maximum booking date is ${maxBookingDate.toISOString().split('T')[0]}`, "error");
+        navigate("/trains");
+        return;
+      }
+    }
+  }, [selectedDate, navigate, showToast]);
+
   useEffect(() => {
     if (trainId) {
       const token = localStorage.getItem("token");

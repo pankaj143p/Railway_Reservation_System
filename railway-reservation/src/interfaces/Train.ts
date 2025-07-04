@@ -14,6 +14,10 @@ export interface Train {
   operationalDays?: string[]; // Days of week this train operates (e.g., ['MON', 'TUE', 'WED'])
   availableSeats?: { [date: string]: number }; // Date-wise available seats
   validUntil?: string; // Last date for booking (default: 3 months from creation)
+  // New admin fields
+  operationalStatus?: 'OPERATIONAL' | 'MAINTENANCE' | 'CANCELLED' | 'DELAYED'; // Current operational status
+  maintenanceNotes?: string; // Notes for maintenance or operational issues
+  isActive?: boolean; // For soft delete functionality (default: true)
 }
 
 export interface TrainSchedule {

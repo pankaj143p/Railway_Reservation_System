@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Train } from "../../../interfaces/Train";
 
 import Calendar from "../../common/Calender";
-
+import RoutesModal from "../trainform/trainroutes";
 
 interface CardProps {
   train: Train;
@@ -11,6 +11,8 @@ interface CardProps {
 
 const Card: React.FC<CardProps> = ({ train }) => {
   const [showCalendar, setShowCalendar] = useState(false);
+  const [routesModalOpen, setRoutesModalOpen] = useState(false);
+  const [routesTrain, setRoutesTrain] = useState<Train | null>(null);
   const navigate = useNavigate();
 
   const handleBookNowClick = () => {
@@ -42,6 +44,11 @@ const Card: React.FC<CardProps> = ({ train }) => {
           <span className={`font-bold ${train.status === "ON_TIME" ? "text-green-600" : "text-red-600"}`}>
             Status: {train.status}
           </span>
+           <RoutesModal
+                  open={routesModalOpen}
+                  routes={routesTrain?.routes || []}
+                  onClose={() => { setRoutesModalOpen(false); setRoutesTrain(null); }}
+                />
         </div>
         <button
           onClick={handleBookNowClick}
