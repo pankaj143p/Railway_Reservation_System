@@ -52,10 +52,12 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
   }, [initialData, open]);
 
   // Handle input changes and ensure numbers are numbers
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> | any) => {
     const { name, value, type } = e.target;
     if (type === "number") {
       setForm({ ...form, [name]: value === "" ? "" : Number(value) });
+    } else if (type === "boolean") {
+      setForm({ ...form, [name]: value });
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -155,6 +157,30 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
               className="border rounded px-3 py-2 bg-white/60 w-full min-h-[80px] resize-y"
               rows={3}
             />
+          </div>
+
+          {/* New IsActive Field */}
+          <div>
+            <label className="block mb-1 font-medium text-blue-900">Train Status</label>
+            <select
+              name="isActive"
+              value={form.isActive !== undefined ? (form.isActive ? "true" : "false") : "true"}
+              onChange={(e) => handleChange({
+                target: {
+                  name: "isActive",
+                  value: e.target.value === "true",
+                  type: "boolean"
+                }
+              } as any)}
+              className="border rounded px-3 py-2 bg-white/60 w-full"
+              required
+            >
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+            <small className="text-gray-600 text-xs mt-1 block">
+              Inactive trains will not be visible to customers for booking
+            </small>
           </div>
 
           <div>

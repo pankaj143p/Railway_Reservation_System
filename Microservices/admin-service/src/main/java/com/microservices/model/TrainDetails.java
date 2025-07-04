@@ -9,6 +9,7 @@ import java.time.LocalTime;
 import java.util.List;
 @Data
 @Entity
+@Table(name = "train_details")
 public class TrainDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -46,6 +47,16 @@ public class TrainDetails {
 
     @Column
     private LocalDate date;
+
+    // New fields for admin management
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean isActive = true;
+
+    @Column(length = 50)
+    private String operationalStatus = "OPERATIONAL";
+
+    @Column(length = 500)
+    private String maintenanceNotes;
 
 
 }

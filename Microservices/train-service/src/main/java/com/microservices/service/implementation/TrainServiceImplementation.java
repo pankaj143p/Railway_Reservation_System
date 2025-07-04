@@ -35,6 +35,10 @@ public class TrainServiceImplementation implements TrainService {
         train.setStatus(TrainStatus.ON_TIME);
         train.setAmount(req.getAmount());
         train.setDate(req.getDate());
+        // Set new fields with defaults
+        train.setIsActive(req.getIsActive() != null ? req.getIsActive() : true);
+        train.setOperationalStatus(req.getOperationalStatus() != null ? req.getOperationalStatus() : "OPERATIONAL");
+        train.setMaintenanceNotes(req.getMaintenanceNotes());
         logger.info("Adding new train: {}", req.getTrainName());
         return trainRepository.save(train);
     }
@@ -72,6 +76,10 @@ public class TrainServiceImplementation implements TrainService {
         exTrain.setStatus(TrainStatus.ON_TIME);
         exTrain.setAmount(req.getAmount());
         exTrain.setDate(req.getDate());
+        // Update new fields
+        exTrain.setIsActive(req.getIsActive() != null ? req.getIsActive() : true);
+        exTrain.setOperationalStatus(req.getOperationalStatus() != null ? req.getOperationalStatus() : "OPERATIONAL");
+        exTrain.setMaintenanceNotes(req.getMaintenanceNotes());
         logger.info("Updated train: {}", id);
         return trainRepository.save(exTrain);
     }

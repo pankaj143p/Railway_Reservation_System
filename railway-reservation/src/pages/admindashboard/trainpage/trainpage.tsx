@@ -17,7 +17,22 @@ const TrainsPage: React.FC = () => {
   const [routesTrain, setRoutesTrain] = useState<Train | null>(null);
 
   useEffect(() => {
-    fetchTrains().then(setTrains);
+    console.log("Fetching trains...");
+    fetchTrains()
+      .then(data => {
+        console.log("Trains fetched:", data, "Type:", typeof data, "Is Array:", Array.isArray(data));
+        // Ensure we always have an array
+        if (Array.isArray(data)) {
+          setTrains(data);
+        } else {
+          console.error("fetchTrains did not return an array:", data);
+          setTrains([]);
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching trains:", error);
+        setTrains([]);
+      });
   }, []);
 
 //  const handleAdd = async (train: Partial<Train>) => {
@@ -36,8 +51,17 @@ const TrainsPage: React.FC = () => {
 
 
   const handleAdd = async (train: Partial<Train>) => {
-    const newTrain = await addTrain(train);
-    setTrains([...trains, newTrain]);
+    try {
+      const newTrain = await addTrain(train);
+      if (Array.isArray(trains)) {
+        setTrains([...trains, newTrain]);
+      } else {
+        setTrains([newTrain]);
+      }
+    } catch (err) {
+      alert("Failed to add train. See console for details.");
+      console.error("Add train error:", err);
+    }
   };
 
   const handleUpdate = async (train: Partial<Train>) => {
@@ -45,7 +69,12 @@ const TrainsPage: React.FC = () => {
     try {
       await updateTrain(editingTrain.trainId, train);
       const updatedTrains = await fetchTrains();
-      setTrains(updatedTrains);
+      if (Array.isArray(updatedTrains)) {
+        setTrains(updatedTrains);
+      } else {
+        console.error("fetchTrains did not return an array:", updatedTrains);
+        setTrains([]);
+      }
       setEditingTrain(null);
     } catch (err) {
       alert("Failed to update train. See console for details.");
@@ -54,10 +83,12 @@ const TrainsPage: React.FC = () => {
   };
 
   const handleDelete = async (trainId: number) => {
-    const train = trains.find(t => t.trainId === trainId);
-    if (train) {
-      setTrainToDelete(train);
-      setDeleteConfirmOpen(true);
+    if (Array.isArray(trains)) {
+      const train = trains.find(t => t.trainId === trainId);
+      if (train) {
+        setTrainToDelete(train);
+        setDeleteConfirmOpen(true);
+      }
     }
   };
 
@@ -133,9 +164,12 @@ const TrainsPage: React.FC = () => {
           <div>Actions</div>
         </div>
         <div className="flex flex-col gap-4">
-          {trains
-            .filter(train => showInactive || train.isActive !== false)
-            .map((t, idx) => (
+          {(() => {
+            console.log("Current trains state:", trains, "Type:", typeof trains, "Is Array:", Array.isArray(trains));
+            const trainsArray = Array.isArray(trains) ? trains : [];
+            return trainsArray
+              .filter(train => showInactive || train.isActive !== false)
+              .map((t, idx) => (
             <div
               key={t.trainId ?? idx}
               className={`grid grid-cols-2 md:grid-cols-14 gap-4 items-center px-4 md:px-6 py-4 rounded-xl backdrop-blur-lg border border-white/40 shadow transition hover:scale-[1.01] text-xs md:text-sm ${
@@ -218,10 +252,11 @@ const TrainsPage: React.FC = () => {
                 )}
               </div>
             </div>
-          ))}
-          {trains.filter(train => showInactive || train.isActive !== false).length === 0 && (
+          ));
+          })()}
+          {(Array.isArray(trains) ? trains : []).filter(train => showInactive || train.isActive !== false).length === 0 && (
             <div className="text-center text-gray-400 py-8">
-              {trains.length === 0 ? "No trains found." : "No active trains found. Check 'Show Inactive Trains' to see all trains."}
+              {!Array.isArray(trains) || trains.length === 0 ? "No trains found." : "No active trains found. Check 'Show Inactive Trains' to see all trains."}
             </div>
           )}
         </div>
