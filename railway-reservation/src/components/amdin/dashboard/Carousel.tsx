@@ -2,13 +2,10 @@ import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
 
-// Import Swiper styles
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/effect-fade';
+// Import Swiper styles (with proper TypeScript handling)
+import 'swiper/swiper-bundle.css';
 
-// Styled components (if you were using styled-components)
+// Styled components
 import styled from 'styled-components';
 
 interface CarouselProps {
@@ -41,10 +38,10 @@ const Carousel: React.FC<CarouselProps> = ({
 }) => {
   // Railway-themed default images if none provided
   const defaultRailwayImages = [
-    '/api/placeholder/800/400?text=Modern+Train+Station',
-    '/api/placeholder/800/400?text=High+Speed+Rail',
-    '/api/placeholder/800/400?text=Scenic+Railway+Route',
-    '/api/placeholder/800/400?text=Digital+Booking+System'
+    'https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=800&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=400&fit=crop'
   ];
 
   const carouselImages = images.length > 0 ? images : defaultRailwayImages;
@@ -96,7 +93,7 @@ const Carousel: React.FC<CarouselProps> = ({
                 onError={(e) => {
                   // Fallback image on error
                   const target = e.target as HTMLImageElement;
-                  target.src = `/api/placeholder/800/400?text=Railway+Image+${index + 1}`;
+                  target.src = `https://via.placeholder.com/800x400/4338ca/ffffff?text=Railway+Image+${index + 1}`;
                 }}
               />
               <SlideOverlay>
@@ -338,10 +335,10 @@ export const SimpleCarousel: React.FC<CarouselProps> = ({
   delay = 3000
 }) => {
   const defaultImages = [
-    '/api/placeholder/800/400?text=Railway+Station',
-    '/api/placeholder/800/400?text=Train+Journey',
-    '/api/placeholder/800/400?text=Booking+System',
-    '/api/placeholder/800/400?text=Travel+Experience'
+    'https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=800&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=400&fit=crop'
   ];
 
   return (
