@@ -65,13 +65,13 @@ const TicketConfirm = ({ onSubmit }: UserFormProps) => {
       console.log(`Booking validation: Travel date: ${selectedDate}, Today: ${today.toISOString().split('T')[0]}, Max booking: ${maxBookingDate.toISOString().split('T')[0]}`);
 
       if (travelDate.getTime() < today.getTime()) {
-        showToast("❌ Cannot book past dates. Please select a valid travel date.", "error");
+        showToast(" Cannot book past dates. Please select a valid travel date.", "error");
         navigate("/trains");
         return;
       }
 
       if (travelDate.getTime() > maxBookingDate.getTime()) {
-        showToast(`❌ Booking not available beyond 90 days from today. Maximum booking date is ${maxBookingDate.toISOString().split('T')[0]}`, "error");
+        showToast(` Booking not available beyond 90 days from today. Maximum booking date is ${maxBookingDate.toISOString().split('T')[0]}`, "error");
         navigate("/trains");
         return;
       }
@@ -181,8 +181,11 @@ const TicketConfirm = ({ onSubmit }: UserFormProps) => {
               orderId: orderId,
               paymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
-              userEmail: userEmail 
+              userEmail: userEmail,
+              date: selectedDate || new Date().toISOString().split('T')[0] 
             };
+            console.log("Booking data to send:", updatedFormData);
+            
             const verifyRes = await axios.post(
               `${API_URL}/tickets/book/${trainId}`,
               updatedFormData,

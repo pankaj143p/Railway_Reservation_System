@@ -18,10 +18,11 @@ interface SeatAvailability {
   operationalReason?: string; // Reason why train is not operational (maintenance, cancelled, etc.)
 }
 
-const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect, onClose }) => {
+const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect, onClose }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [seatAvailability, setSeatAvailability] = useState<{ [key: string]: SeatAvailability }>({});
   const [loading, setLoading] = useState(false);
+  const [internalSelectedDate, setInternalSelectedDate] = useState<string>('');
 
   const API_URL = import.meta.env.VITE_API_GATEWAY_URL;
 
@@ -32,7 +33,6 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
   const fetchSeatAvailability = async () => {
     setLoading(true);
     try {
-      // const token = localStorage.getItem("token");
       const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
       const endDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
       
@@ -45,15 +45,16 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
       maxBookingDate.setDate(maxBookingDate.getDate() + 90);
       maxBookingDate.setHours(23, 59, 59, 999); // Set to end of day for comparison
       
-      console.log(`fetchSeatAvailability: Today is ${today.toISOString().split('T')[0]}, Max booking date is ${maxBookingDate.toISOString().split('T')[0]}`);
-      
       // Fetch availability for each day of the month
       for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-        const dateStr = date.toISOString().split('T')[0];
-        const currentDateForComparison = new Date(date);
-        currentDateForComparison.setHours(0, 0, 0, 0);
+        // ✅ Fix: Create date string directly to avoid timezone issues
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const day = date.getDate();
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         
-        console.log(`Checking date: ${dateStr}, Date object: ${currentDateForComparison.toISOString()}, Beyond 90 days? ${currentDateForComparison > maxBookingDate}`);
+        const currentDateForComparison = new Date(year, month, day);
+        currentDateForComparison.setHours(0, 0, 0, 0);
         
         if (currentDateForComparison < today) {
           // Past dates are unavailable
@@ -74,42 +75,14 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
             totalSeats: trainDetails?.totalSeats || 0,
             status: 'unavailable'
           };
-          console.log(`Date ${dateStr} marked as BEYOND 90 DAYS/UNAVAILABLE`);
         } else {
           try {
-            // First check if train is operational on this date
-            const trainStatusResponse = await axios.get(
-              `${API_URL}/trains/operational-status/${trainId}?date=${dateStr}`,
-              {
-                // headers: {
-                //   Authorization: `Bearer ${token}`,
-                // },
-              }
-            );
-            
-            const trainStatus = trainStatusResponse.data;
-            console.log("Train operational status for date", dateStr, ":", trainStatus);
-            
-            // If train is not operational, mark as such
-            if (!trainStatus.isOperational) {
-              availability[dateStr] = {
-                date: dateStr,
-                availableSeats: 0,
-                bookedSeats: 0,
-                totalSeats: trainDetails?.totalSeats || 0,
-                status: 'train-not-operational',
-                operationalReason: trainStatus.reason || 'Train not operational'
-              };
-              console.log(`Date ${dateStr} marked as TRAIN NOT OPERATIONAL: ${trainStatus.reason}`);
-              continue;
-            }
-            
-            // If train is operational, check seat availability
+            // Only call ticket availability API for dates within booking window
             const response = await axios.get(
               `${API_URL}/tickets/availability/${trainId}?date=${dateStr}`,
               {
                 // headers: {
-                // //   Authorization: `Bearer ${token}`,
+                //   Authorization: `Bearer ${token}`,
                 // },
               }
             );
@@ -130,59 +103,22 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
           } catch (error) {
             console.error(`Error fetching availability for ${dateStr}:`, error);
             
-            // If operational status API fails, try to get seat availability anyway
-            // This ensures backwards compatibility if the operational status API doesn't exist
-            try {
-              const response = await axios.get(
-                `${API_URL}/tickets/availability/${trainId}?date=${dateStr}`,
-                {
-                  // headers: {
-                  // //   Authorization: `Bearer ${token}`,
-                  // },
-                }
-              );
-              
-              const bookedSeats = response.data;
-              const totalSeats = trainDetails?.totalSeats || 0;
-              const availableSeats = totalSeats - bookedSeats;
-              
-              availability[dateStr] = {
-                date: dateStr,
-                availableSeats,
-                bookedSeats,
-                totalSeats,
-                status: availableSeats <= 0 ? 'full' : 'available'
-              };
-            } catch (fallbackError) {
-              console.error(`Fallback error for ${dateStr}:`, fallbackError);
-              
-              // For demonstration: Add some sample operational statuses
-              // In production, this would come from your backend API
-              const dayOfMonth = new Date(dateStr).getDate();
-              let demoStatus = 'available';
-              let demoReason = '';
-              
-              // Demo: Show train not operational on certain dates
-              if (dayOfMonth === 15) {
-                demoStatus = 'train-not-operational';
-                demoReason = 'Scheduled maintenance';
-              } else if (dayOfMonth === 22) {
-                demoStatus = 'train-not-operational';
-                demoReason = 'Track repair work';
-              } else if (dayOfMonth === 30) {
-                demoStatus = 'train-not-operational';
-                demoReason = 'Weather conditions';
-              }
-              
-              availability[dateStr] = {
-                date: dateStr,
-                availableSeats: demoStatus === 'train-not-operational' ? 0 : trainDetails?.totalSeats || 0,
-                bookedSeats: 0,
-                totalSeats: trainDetails?.totalSeats || 0,
-                status: demoStatus as 'available' | 'train-not-operational',
-                operationalReason: demoReason || undefined
-              };
+            // For demonstration: Add some sample operational statuses
+            const dayOfMonth = day; // Use the actual day instead of creating new Date
+            let demoStatus = 'available';
+            
+            // Demo: Show some dates as full for testing
+            if (dayOfMonth === 25 || dayOfMonth === 28) {
+              demoStatus = 'full';
             }
+            
+            availability[dateStr] = {
+              date: dateStr,
+              availableSeats: demoStatus === 'full' ? 0 : trainDetails?.totalSeats || 0,
+              bookedSeats: demoStatus === 'full' ? trainDetails?.totalSeats || 0 : 0,
+              totalSeats: trainDetails?.totalSeats || 0,
+              status: demoStatus as 'available' | 'full'
+            };
           }
         }
       }
@@ -192,6 +128,110 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
       console.error('Error fetching seat availability:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ Internal date handling function
+  const handleSelectedDate = (selectedDate: string) => {
+    console.log('🎯 Date selected from calendar:', selectedDate);
+    
+    // ✅ Set internal state
+    setInternalSelectedDate(selectedDate);
+    
+    // ✅ Format date for display
+    const formattedDate = new Date(selectedDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    console.log('📅 Formatted date:', formattedDate);
+    
+    // ✅ Store in local storage
+    localStorage.setItem('selectedTravelDate', selectedDate);
+    localStorage.setItem('selectedTrainId', trainId);
+    
+    // ✅ Prepare booking data
+    const bookingData = {
+      trainId: trainId,
+      date: selectedDate,
+      trainName: trainDetails?.trainName,
+      route: `${trainDetails?.source} → ${trainDetails?.destination}`,
+      totalSeats: trainDetails?.totalSeats,
+      availableSeats: seatAvailability[selectedDate]?.availableSeats || 0,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('🎫 Booking data prepared:', bookingData);
+    
+    // ✅ Show confirmation
+    alert(`✅ Travel date selected: ${formattedDate}`);
+    
+    // ✅ Call the parent component's onDateSelect
+    onDateSelect(selectedDate);
+  };
+
+  // ✅ Optional: Booking function
+  const proceedWithBooking = async (bookingData: any) => {
+    try {
+      console.log('🚀 Starting booking process with:', bookingData);
+      
+      // Example API call
+      const response = await axios.post(`${API_URL}/bookings/initiate`, bookingData, {
+        headers: {
+          'Content-Type': 'application/json',
+          // Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      console.log('✅ Booking initiated:', response.data);
+      alert(`Booking initiated for ${bookingData.date}!`);
+      
+    } catch (error) {
+      console.error('❌ Booking failed:', error);
+      alert('Failed to initiate booking. Please try again.');
+    }
+  };
+
+  // ✅ Check train operational status - called only when date is clicked
+  const checkTrainOperationalStatus = async (dateStr: string): Promise<{isOperational: boolean, reason?: string}> => {
+    try {
+      console.log(`🔍 Checking train operational status for ${dateStr}...`);
+      
+      const trainStatusResponse = await axios.get(
+        `${API_URL}/trains/operational-status/${trainId}?date=${dateStr}`,
+        {
+          // headers: {
+          //   Authorization: `Bearer ${token}`,
+          // },
+        }
+      );
+      
+      const trainStatus = trainStatusResponse.data;
+      console.log("Train operational status for date", dateStr, ":", trainStatus);
+      
+      return {
+        isOperational: trainStatus.isOperational,
+        reason: trainStatus.reason
+      };
+    } catch (error) {
+      console.error(`Error checking operational status for ${dateStr}:`, error);
+      
+      // For demonstration: Add some sample operational statuses when API fails
+      const dayOfMonth = new Date(dateStr).getDate();
+      
+      // Demo: Show train not operational on certain dates
+      if (dayOfMonth === 15) {
+        return { isOperational: false, reason: 'Scheduled maintenance' };
+      } else if (dayOfMonth === 22) {
+        return { isOperational: false, reason: 'Track repair work' };
+      } else if (dayOfMonth === 30) {
+        return { isOperational: false, reason: 'Weather conditions' };
+      }
+      
+      // Default to operational if API fails
+      return { isOperational: true };
     }
   };
 
@@ -212,8 +252,9 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
     
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dateStr = date.toISOString().split('T')[0];
+      // ✅ Fix: Create date string directly instead of using Date constructor
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      
       days.push({
         day,
         date: dateStr,
@@ -224,7 +265,12 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
     return days;
   };
 
-  const handleDateClick = (dateStr: string, availability: SeatAvailability) => {
+  const handleDateClick = async (dateStr: string, availability: SeatAvailability) => {
+    // ✅ Add debugging
+    console.log('🐛 Debug Date Click:');
+    console.log('  - Clicked dateStr:', dateStr);
+    console.log('  - Availability:', availability);
+    
     // Check if date is within 90-day booking window
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -237,8 +283,6 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
     console.log(`handleDateClick: Clicked date: ${dateStr}`);
     console.log(`handleDateClick: Today: ${today.toISOString().split('T')[0]}`);
     console.log(`handleDateClick: Max booking: ${maxBookingDate.toISOString().split('T')[0]}`);
-    console.log(`handleDateClick: Clicked date time: ${clickedDate.getTime()}, Max booking time: ${maxBookingDate.getTime()}`);
-    console.log(`handleDateClick: Is beyond 90 days? ${clickedDate.getTime() > maxBookingDate.getTime()}`);
     
     if (clickedDate.getTime() < today.getTime()) {
       alert("❌ Cannot book past dates");
@@ -250,10 +294,43 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
       return;
     }
     
-    if (availability.status === 'available') {
-      onDateSelect(dateStr);
-    } else if (availability.status === 'full') {
-      alert("❌ No seats available for this date");
+    // ✅ Only check operational status when date is clicked
+    if (availability.status === 'available' || availability.status === 'full') {
+      // Show loading state while checking operational status
+      setLoading(true);
+      
+      try {
+        const operationalStatus = await checkTrainOperationalStatus(dateStr);
+        
+        if (!operationalStatus.isOperational) {
+          alert(`🚫 Train not operational on ${dateStr}\nReason: ${operationalStatus.reason || 'Service unavailable'}`);
+          
+          // Update the availability to reflect operational status
+          setSeatAvailability(prev => ({
+            ...prev,
+            [dateStr]: {
+              ...availability,
+              status: 'train-not-operational',
+              operationalReason: operationalStatus.reason
+            }
+          }));
+          
+          return;
+        }
+        
+        // If train is operational and seats are available, proceed with selection
+        if (availability.status === 'available') {
+          handleSelectedDate(dateStr);
+        } else if (availability.status === 'full') {
+          alert("❌ No seats available for this date");
+        }
+        
+      } catch (error) {
+        console.error('Error checking operational status:', error);
+        alert('❌ Unable to verify train operational status. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     } else if (availability.status === 'train-not-operational') {
       alert(`🚫 Train not operational on ${dateStr}\nReason: ${availability.operationalReason || 'Service unavailable'}`);
     } else {
@@ -313,12 +390,15 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
   };
 
   const days = getDaysInMonth();
-  const today = new Date().toISOString().split('T')[0];
+  
+  // ✅ Create today's date string in the same format
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   
   // Debug: Log the 90-day limit for testing
   const maxBookingDate = new Date();
   maxBookingDate.setDate(maxBookingDate.getDate() + 90);
-  console.log(`Calendar: Today is ${today}, Max booking date is ${maxBookingDate.toISOString().split('T')[0]}`);
+  console.log(`Calendar: Today is ${todayStr}, Max booking date is ${maxBookingDate.toISOString().split('T')[0]}`);
 
   return (
     <CalendarOverlay>
@@ -333,6 +413,28 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
           <p>{trainDetails?.source} → {trainDetails?.destination}</p>
           <p>Total Seats: {trainDetails?.totalSeats}</p>
         </TrainInfo>
+
+        {/* ✅ Selected Date Confirmation Section */}
+        {internalSelectedDate && (
+          <SelectedDateInfo>
+            <h4>✅ Selected Date</h4>
+            <p>{new Date(internalSelectedDate).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long', 
+              day: 'numeric'
+            })}</p>
+            <ConfirmButton onClick={() => {
+              alert(`Proceeding with booking for ${internalSelectedDate}`);
+              onClose(); // Close calendar after confirmation
+            }}>
+              🎫 Confirm & Proceed
+            </ConfirmButton>
+            <ClearButton onClick={() => setInternalSelectedDate('')}>
+              ❌ Clear Selection
+            </ClearButton>
+          </SelectedDateInfo>
+        )}
 
         <CalendarNavigation>
           <NavButton 
@@ -362,7 +464,8 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
               key={index}
               isEmpty={!day}
               status={day?.availability?.status}
-              isToday={day?.date === today}
+              isToday={day?.date === todayStr}  // ✅ Fix: Use consistent date format
+              isSelected={day?.date === internalSelectedDate}
               onClick={() => day?.availability && handleDateClick(day.date, day.availability)}
             >
               {day && (
@@ -401,12 +504,12 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
         <BookingPolicy>
           <span>📅 Booking available up to 90 days in advance only</span>
           <br />
-          <span>🚫 Orange dates indicate train service is not available</span>
+          <span>🚫 Train operational status checked when you click a date</span>
           <br />
-          <small>Click on any date to see specific availability or service status</small>
+          <small>Click on any green date to check availability and operational status</small>
         </BookingPolicy>
 
-        {loading && <LoadingOverlay>Loading availability...</LoadingOverlay>}
+        {loading && <LoadingOverlay>Loading...</LoadingOverlay>}
       </CalendarContainer>
     </CalendarOverlay>
   );
@@ -483,6 +586,59 @@ const TrainInfo = styled.div`
   }
 `;
 
+const SelectedDateInfo = styled.div`
+  background: #dcfce7;
+  border: 2px solid #16a34a;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+  
+  h4 {
+    margin: 0 0 8px 0;
+    color: #166534;
+    font-size: 1.1rem;
+  }
+  
+  p {
+    margin: 4px 0 12px 0;
+    color: #166534;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+`;
+
+const ConfirmButton = styled.button`
+  background: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-right: 8px;
+  
+  &:hover {
+    background: #15803d;
+  }
+`;
+
+const ClearButton = styled.button`
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  
+  &:hover {
+    background: #b91c1c;
+  }
+`;
+
 const CalendarNavigation = styled.div`
   display: flex;
   justify-content: space-between;
@@ -541,6 +697,7 @@ interface DayCellProps {
   isEmpty?: boolean;
   status?: 'available' | 'full' | 'unavailable' | 'train-not-operational';
   isToday?: boolean;
+  isSelected?: boolean;
 }
 
 const DayCell = styled.div<DayCellProps>`
@@ -599,6 +756,21 @@ const DayCell = styled.div<DayCellProps>`
   
   ${props => props.isToday && `
     box-shadow: 0 0 0 2px #fbbf24;
+  `}
+  
+  ${props => props.isSelected && `
+    box-shadow: 0 0 0 3px #8b5cf6;
+    background: #f3e8ff !important;
+    
+    &:after {
+      content: '✓';
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      font-size: 0.7rem;
+      color: #8b5cf6;
+      font-weight: bold;
+    }
   `}
 `;
 
