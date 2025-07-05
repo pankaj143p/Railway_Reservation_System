@@ -3,7 +3,7 @@ name: Deploy User Service to Azure
 on:
   push:
     paths:
-      - 'Microservices/User_Service/**'
+      - 'Microservices/user-service/**'
 
 jobs:
   build-and-deploy:
