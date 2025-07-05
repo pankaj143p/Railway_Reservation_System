@@ -36,7 +36,7 @@ export const fetchTrainList = async () => {
 // Fetch trains for public listing (only available trains within 90 days)
 export const fetchAvailableTrains = async () => {
   try {
-    const response = await fetch(`${TRAIN_SERVICE_URL}/trains/available`, {
+    const response = await fetch(`${TRAIN_SERVICE_URL}/trains/all`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"

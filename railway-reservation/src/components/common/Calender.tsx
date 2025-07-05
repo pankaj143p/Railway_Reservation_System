@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 interface CalendarProps {
   trainId: string;
@@ -15,16 +16,30 @@ interface SeatAvailability {
   bookedSeats: number;
   totalSeats: number;
   status: 'available' | 'full' | 'unavailable' | 'train-not-operational';
-  operationalReason?: string; // Reason why train is not operational (maintenance, cancelled, etc.)
+  operationalReason?: string;
 }
 
-const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect, onClose }) => {
+const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect, onClose }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [seatAvailability, setSeatAvailability] = useState<{ [key: string]: SeatAvailability }>({});
   const [loading, setLoading] = useState(false);
   const [internalSelectedDate, setInternalSelectedDate] = useState<string>('');
+  
+  // Modal states
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [selectedDateFormatted, setSelectedDateFormatted] = useState('');
 
   const API_URL = import.meta.env.VITE_API_GATEWAY_URL;
+  const navigate = useNavigate();
+
+  // Check if user is logged in
+  const isUserLoggedIn = () => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    return !!token;
+  };
 
   useEffect(() => {
     fetchSeatAvailability();
@@ -38,16 +53,13 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
       
       const availability: { [key: string]: SeatAvailability } = {};
       
-      // Calculate 90 days from today
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const maxBookingDate = new Date(today);
       maxBookingDate.setDate(maxBookingDate.getDate() + 90);
-      maxBookingDate.setHours(23, 59, 59, 999); // Set to end of day for comparison
+      maxBookingDate.setHours(23, 59, 59, 999);
       
-      // Fetch availability for each day of the month
       for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-        // ✅ Fix: Create date string directly to avoid timezone issues
         const year = date.getFullYear();
         const month = date.getMonth();
         const day = date.getDate();
@@ -57,7 +69,6 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
         currentDateForComparison.setHours(0, 0, 0, 0);
         
         if (currentDateForComparison < today) {
-          // Past dates are unavailable
           availability[dateStr] = {
             date: dateStr,
             availableSeats: 0,
@@ -65,9 +76,7 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
             totalSeats: trainDetails?.totalSeats || 0,
             status: 'unavailable'
           };
-          console.log(`Date ${dateStr} marked as PAST/UNAVAILABLE`);
         } else if (currentDateForComparison > maxBookingDate) {
-          // Dates beyond 90 days are unavailable
           availability[dateStr] = {
             date: dateStr,
             availableSeats: 0,
@@ -77,19 +86,11 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
           };
         } else {
           try {
-            // Only call ticket availability API for dates within booking window
             const response = await axios.get(
-              `${API_URL}/tickets/availability/${trainId}?date=${dateStr}`,
-              {
-                // headers: {
-                //   Authorization: `Bearer ${token}`,
-                // },
-              }
+              `${API_URL}/tickets/availability/${trainId}?date=${dateStr}`
             );
             
             const bookedSeats = response.data;
-            console.log("Booked seats for date", dateStr, ":", bookedSeats);
-            
             const totalSeats = trainDetails?.totalSeats || 0;
             const availableSeats = totalSeats - bookedSeats;
             
@@ -101,13 +102,9 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
               status: availableSeats <= 0 ? 'full' : 'available'
             };
           } catch (error) {
-            console.error(`Error fetching availability for ${dateStr}:`, error);
-            
-            // For demonstration: Add some sample operational statuses
-            const dayOfMonth = day; // Use the actual day instead of creating new Date
+            const dayOfMonth = day;
             let demoStatus = 'available';
             
-            // Demo: Show some dates as full for testing
             if (dayOfMonth === 25 || dayOfMonth === 28) {
               demoStatus = 'full';
             }
@@ -131,14 +128,9 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
     }
   };
 
-  // ✅ Internal date handling function
   const handleSelectedDate = (selectedDate: string) => {
-    console.log('🎯 Date selected from calendar:', selectedDate);
-    
-    // ✅ Set internal state
     setInternalSelectedDate(selectedDate);
     
-    // ✅ Format date for display
     const formattedDate = new Date(selectedDate).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric', 
@@ -146,13 +138,11 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
       day: 'numeric'
     });
     
-    console.log('📅 Formatted date:', formattedDate);
+    setSelectedDateFormatted(formattedDate);
     
-    // ✅ Store in local storage
     localStorage.setItem('selectedTravelDate', selectedDate);
     localStorage.setItem('selectedTrainId', trainId);
     
-    // ✅ Prepare booking data
     const bookingData = {
       trainId: trainId,
       date: selectedDate,
@@ -163,65 +153,27 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
       timestamp: new Date().toISOString()
     };
     
-    console.log('🎫 Booking data prepared:', bookingData);
-    
-    // ✅ Show confirmation
-    alert(`✅ Travel date selected: ${formattedDate}`);
-    
-    // ✅ Call the parent component's onDateSelect
+    setShowSuccessModal(true);
     onDateSelect(selectedDate);
   };
 
-  // ✅ Optional: Booking function
-  const proceedWithBooking = async (bookingData: any) => {
-    try {
-      console.log('🚀 Starting booking process with:', bookingData);
-      
-      // Example API call
-      const response = await axios.post(`${API_URL}/bookings/initiate`, bookingData, {
-        headers: {
-          'Content-Type': 'application/json',
-          // Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      console.log('✅ Booking initiated:', response.data);
-      alert(`Booking initiated for ${bookingData.date}!`);
-      
-    } catch (error) {
-      console.error('❌ Booking failed:', error);
-      alert('Failed to initiate booking. Please try again.');
-    }
-  };
-
-  // ✅ Check train operational status - called only when date is clicked
   const checkTrainOperationalStatus = async (dateStr: string): Promise<{isOperational: boolean, reason?: string}> => {
     try {
-      console.log(`🔍 Checking train operational status for ${dateStr}...`);
-      
       const trainStatusResponse = await axios.get(
-        `${API_URL}/trains/operational-status/${trainId}?date=${dateStr}`,
-        {
-          // headers: {
-          //   Authorization: `Bearer ${token}`,
-          // },
-        }
+        `${API_URL}/trains/operational-status/${trainId}?date=${dateStr}`
       );
       
       const trainStatus = trainStatusResponse.data;
-      console.log("Train operational status for date", dateStr, ":", trainStatus);
       
       return {
-        isOperational: trainStatus.isOperational,
+        isOperational: trainStatus==="OPERATIONAL",
         reason: trainStatus.reason
       };
     } catch (error) {
       console.error(`Error checking operational status for ${dateStr}:`, error);
       
-      // For demonstration: Add some sample operational statuses when API fails
       const dayOfMonth = new Date(dateStr).getDate();
       
-      // Demo: Show train not operational on certain dates
       if (dayOfMonth === 15) {
         return { isOperational: false, reason: 'Scheduled maintenance' };
       } else if (dayOfMonth === 22) {
@@ -230,7 +182,6 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
         return { isOperational: false, reason: 'Weather conditions' };
       }
       
-      // Default to operational if API fails
       return { isOperational: true };
     }
   };
@@ -245,14 +196,11 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
 
     const days = [];
     
-    // Add empty cells for days before the first day of the month
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
     
-    // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      // ✅ Fix: Create date string directly instead of using Date constructor
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       
       days.push({
@@ -266,12 +214,19 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
   };
 
   const handleDateClick = async (dateStr: string, availability: SeatAvailability) => {
-    // ✅ Add debugging
-    console.log('🐛 Debug Date Click:');
-    console.log('  - Clicked dateStr:', dateStr);
-    console.log('  - Availability:', availability);
-    
-    // Check if date is within 90-day booking window
+    // Check if user is logged in first
+    if (!isUserLoggedIn()) {
+      const formattedDate = new Date(dateStr).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      setSelectedDateFormatted(formattedDate);
+      setShowLoginModal(true);
+      return;
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const clickedDate = new Date(dateStr);
@@ -280,32 +235,28 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
     maxBookingDate.setDate(maxBookingDate.getDate() + 90);
     maxBookingDate.setHours(0, 0, 0, 0);
     
-    console.log(`handleDateClick: Clicked date: ${dateStr}`);
-    console.log(`handleDateClick: Today: ${today.toISOString().split('T')[0]}`);
-    console.log(`handleDateClick: Max booking: ${maxBookingDate.toISOString().split('T')[0]}`);
-    
     if (clickedDate.getTime() < today.getTime()) {
-      alert("❌ Cannot book past dates");
+      setModalMessage("Cannot book past dates");
+      setShowErrorModal(true);
       return;
     }
     
     if (clickedDate.getTime() > maxBookingDate.getTime()) {
-      alert(`❌ Booking not available beyond 90 days from today (Max date: ${maxBookingDate.toISOString().split('T')[0]})`);
+      setModalMessage(`Booking not available beyond 90 days from today`);
+      setShowErrorModal(true);
       return;
     }
     
-    // ✅ Only check operational status when date is clicked
     if (availability.status === 'available' || availability.status === 'full') {
-      // Show loading state while checking operational status
       setLoading(true);
       
       try {
         const operationalStatus = await checkTrainOperationalStatus(dateStr);
         
         if (!operationalStatus.isOperational) {
-          alert(`🚫 Train not operational on ${dateStr}\nReason: ${operationalStatus.reason || 'Service unavailable'}`);
+          setModalMessage(`Train not operational on ${new Date(dateStr).toLocaleDateString()}\nReason: ${operationalStatus.reason || 'Service unavailable'}`);
+          setShowErrorModal(true);
           
-          // Update the availability to reflect operational status
           setSeatAvailability(prev => ({
             ...prev,
             [dateStr]: {
@@ -318,28 +269,30 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
           return;
         }
         
-        // If train is operational and seats are available, proceed with selection
         if (availability.status === 'available') {
           handleSelectedDate(dateStr);
         } else if (availability.status === 'full') {
-          alert("❌ No seats available for this date");
+          setModalMessage("No seats available for this date");
+          setShowErrorModal(true);
         }
         
       } catch (error) {
         console.error('Error checking operational status:', error);
-        alert('❌ Unable to verify train operational status. Please try again.');
+        setModalMessage('Unable to verify train operational status. Please try again.');
+        setShowErrorModal(true);
       } finally {
         setLoading(false);
       }
     } else if (availability.status === 'train-not-operational') {
-      alert(`🚫 Train not operational on ${dateStr}\nReason: ${availability.operationalReason || 'Service unavailable'}`);
+      setModalMessage(`Train not operational on ${new Date(dateStr).toLocaleDateString()}\nReason: ${availability.operationalReason || 'Service unavailable'}`);
+      setShowErrorModal(true);
     } else {
-      alert("❌ This date is not available for booking");
+      setModalMessage("This date is not available for booking");
+      setShowErrorModal(true);
     }
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
-    // Check if navigation is allowed before proceeding
     if (direction === 'prev' && !canNavigatePrev()) return;
     if (direction === 'next' && !canNavigateNext()) return;
     
@@ -361,7 +314,6 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
     });
   };
 
-  // Check if navigation is allowed
   const canNavigatePrev = () => {
     const today = new Date();
     const prevMonth = new Date(currentMonth);
@@ -383,138 +335,234 @@ const Calendar: React.FC<CalendarProps>= ({ trainId, trainDetails, onDateSelect,
     const firstDayOfNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
     firstDayOfNextMonth.setHours(0, 0, 0, 0);
     
-    const canNavigate = firstDayOfNextMonth.getTime() <= maxDate.getTime();
-    console.log(`canNavigateNext: First day of next month: ${firstDayOfNextMonth.toISOString().split('T')[0]}, Max date: ${maxDate.toISOString().split('T')[0]}, Can navigate: ${canNavigate}`);
-    
-    return canNavigate;
+    return firstDayOfNextMonth.getTime() <= maxDate.getTime();
   };
 
   const days = getDaysInMonth();
-  
-  // ✅ Create today's date string in the same format
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  
-  // Debug: Log the 90-day limit for testing
-  const maxBookingDate = new Date();
-  maxBookingDate.setDate(maxBookingDate.getDate() + 90);
-  console.log(`Calendar: Today is ${todayStr}, Max booking date is ${maxBookingDate.toISOString().split('T')[0]}`);
 
   return (
-    <CalendarOverlay>
-      <CalendarContainer>
-        <CalendarHeader>
-          <h3>Select Travel Date</h3>
-          <CloseButton onClick={onClose}>×</CloseButton>
-        </CalendarHeader>
-        
-        <TrainInfo>
-          <h4>{trainDetails?.trainName}</h4>
-          <p>{trainDetails?.source} → {trainDetails?.destination}</p>
-          <p>Total Seats: {trainDetails?.totalSeats}</p>
-        </TrainInfo>
+    <>
+      <CalendarOverlay>
+        <CalendarContainer>
+          <CalendarHeader>
+            <h3>Select Travel Date</h3>
+            <CloseButton onClick={onClose}>×</CloseButton>
+          </CalendarHeader>
+          
+          <TrainInfo>
+            <h4>{trainDetails?.trainName}</h4>
+            <p>{trainDetails?.source} → {trainDetails?.destination}</p>
+            <p>Total Seats: {trainDetails?.totalSeats}</p>
+          </TrainInfo>
 
-        {/* ✅ Selected Date Confirmation Section */}
-        {internalSelectedDate && (
-          <SelectedDateInfo>
-            <h4>✅ Selected Date</h4>
-            <p>{new Date(internalSelectedDate).toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long', 
-              day: 'numeric'
-            })}</p>
-            <ConfirmButton onClick={() => {
-              alert(`Proceeding with booking for ${internalSelectedDate}`);
-              onClose(); // Close calendar after confirmation
-            }}>
-              🎫 Confirm & Proceed
-            </ConfirmButton>
-            <ClearButton onClick={() => setInternalSelectedDate('')}>
-              ❌ Clear Selection
-            </ClearButton>
-          </SelectedDateInfo>
-        )}
+          {internalSelectedDate && (
+            <SelectedDateInfo>
+              <h4>✅ Selected Date</h4>
+              <p>{selectedDateFormatted}</p>
+              <ConfirmButton onClick={() => {
+                setShowSuccessModal(false);
+                onClose();
+              }}>
+                🎫 Confirm & Proceed
+              </ConfirmButton>
+              <ClearButton onClick={() => {
+                setInternalSelectedDate('');
+                setSelectedDateFormatted('');
+              }}>
+                ❌ Clear Selection
+              </ClearButton>
+            </SelectedDateInfo>
+          )}
 
-        <CalendarNavigation>
-          <NavButton 
-            onClick={() => navigateMonth('prev')}
-            disabled={!canNavigatePrev()}
-          >
-            ‹
-          </NavButton>
-          <MonthYear>{formatMonthYear()}</MonthYear>
-          <NavButton 
-            onClick={() => navigateMonth('next')}
-            disabled={!canNavigateNext()}
-          >
-            ›
-          </NavButton>
-        </CalendarNavigation>
-
-        <DaysHeader>
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <DayHeaderCell key={day}>{day}</DayHeaderCell>
-          ))}
-        </DaysHeader>
-
-        <CalendarGrid>
-          {days.map((day, index) => (
-            <DayCell 
-              key={index}
-              isEmpty={!day}
-              status={day?.availability?.status}
-              isToday={day?.date === todayStr}  // ✅ Fix: Use consistent date format
-              isSelected={day?.date === internalSelectedDate}
-              onClick={() => day?.availability && handleDateClick(day.date, day.availability)}
+          <CalendarNavigation>
+            <NavButton 
+              onClick={() => navigateMonth('prev')}
+              disabled={!canNavigatePrev()}
             >
-              {day && (
-                <>
-                  <DayNumber>{day.day}</DayNumber>
-                  {day.availability && (
-                    <SeatInfo>
-                      <SeatCount>{day.availability.availableSeats}</SeatCount>
-                    </SeatInfo>
-                  )}
-                </>
-              )}
-            </DayCell>
-          ))}
-        </CalendarGrid>
+              ‹
+            </NavButton>
+            <MonthYear>{formatMonthYear()}</MonthYear>
+            <NavButton 
+              onClick={() => navigateMonth('next')}
+              disabled={!canNavigateNext()}
+            >
+              ›
+            </NavButton>
+          </CalendarNavigation>
 
-        <Legend>
-          <LegendItem>
-            <LegendColor status="available" />
-            <span>Available</span>
-          </LegendItem>
-          <LegendItem>
-            <LegendColor status="full" />
-            <span>Full</span>
-          </LegendItem>
-          <LegendItem>
-            <LegendColor status="train-not-operational" />
-            <span>Train Not Running</span>
-          </LegendItem>
-          <LegendItem>
-            <LegendColor status="unavailable" />
-            <span>Past/Beyond 90 days</span>
-          </LegendItem>
-        </Legend>
+          <DaysHeader>
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <DayHeaderCell key={day}>{day}</DayHeaderCell>
+            ))}
+          </DaysHeader>
 
-        <BookingPolicy>
-          <span>📅 Booking available up to 90 days in advance only</span>
-          <br />
-          <span>🚫 Train operational status checked when you click a date</span>
-          <br />
-          <small>Click on any green date to check availability and operational status</small>
-        </BookingPolicy>
+          <CalendarGrid>
+            {days.map((day, index) => (
+              <DayCell 
+                key={index}
+                isEmpty={!day}
+                status={day?.availability?.status}
+                isToday={day?.date === todayStr}
+                isSelected={day?.date === internalSelectedDate}
+                onClick={() => day?.availability && handleDateClick(day.date, day.availability)}
+              >
+                {day && (
+                  <>
+                    <DayNumber>{day.day}</DayNumber>
+                    {day.availability && (
+                      <SeatInfo>
+                        <SeatCount>{day.availability.availableSeats}</SeatCount>
+                      </SeatInfo>
+                    )}
+                  </>
+                )}
+              </DayCell>
+            ))}
+          </CalendarGrid>
 
-        {loading && <LoadingOverlay>Loading...</LoadingOverlay>}
-      </CalendarContainer>
-    </CalendarOverlay>
+          <Legend>
+            <LegendItem>
+              <LegendColor status="available" />
+              <span>Available</span>
+            </LegendItem>
+            <LegendItem>
+              <LegendColor status="full" />
+              <span>Full</span>
+            </LegendItem>
+            <LegendItem>
+              <LegendColor status="train-not-operational" />
+              <span>Train Not Running</span>
+            </LegendItem>
+            <LegendItem>
+              <LegendColor status="unavailable" />
+              <span>Past/Beyond 90 days</span>
+            </LegendItem>
+          </Legend>
+
+          <BookingPolicy>
+            <span>📅 Booking available up to 90 days in advance only</span>
+            <br />
+            <span>🚫 Train operational status checked when you click a date</span>
+            <br />
+            <small>Click on any green date to check availability and operational status</small>
+          </BookingPolicy>
+
+          {loading && <LoadingOverlay>Loading...</LoadingOverlay>}
+        </CalendarContainer>
+      </CalendarOverlay>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <ModalOverlay>
+          <ModalContainer $type="success">
+            <ModalIcon>🎉</ModalIcon>
+            <ModalTitle>Date Selected Successfully!</ModalTitle>
+            <ModalMessage>
+              <strong>Travel Date:</strong> {selectedDateFormatted}
+              <br />
+              <strong>Train:</strong> {trainDetails?.trainName}
+              <br />
+              <strong>Route:</strong> {trainDetails?.source} → {trainDetails?.destination}
+              <br />
+              <strong>Available Seats:</strong> {seatAvailability[internalSelectedDate]?.availableSeats || 0}
+            </ModalMessage>
+            <ModalButtonGroup>
+              <ModalButton 
+                $type="primary" 
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  onClose();
+                }}
+              >
+                🎫 Proceed to Booking
+              </ModalButton>
+              <ModalButton 
+                $type="secondary" 
+                onClick={() => setShowSuccessModal(false)}
+              >
+                Select Another Date
+              </ModalButton>
+            </ModalButtonGroup>
+          </ModalContainer>
+        </ModalOverlay>
+      )}
+
+      {/* Login Required Modal */}
+      {showLoginModal && (
+        <ModalOverlay>
+          <ModalContainer $type="warning">
+            <ModalIcon>🔐</ModalIcon>
+            <ModalTitle>Login Required</ModalTitle>
+            <ModalMessage>
+              You need to login to book tickets for <strong>{selectedDateFormatted}</strong>
+              <br />
+              <br />
+              Please login or create an account to continue with your booking.
+            </ModalMessage>
+            <ModalButtonGroup>
+              <ModalButton 
+                $type="primary" 
+                onClick={() => {
+                  setShowLoginModal(false);
+                  onClose();
+                  navigate('/login');
+                }}
+              >
+                🚀 Go to Login
+              </ModalButton>
+              <ModalButton 
+                $type="secondary" 
+                onClick={() => {
+                  setShowLoginModal(false);
+                  onClose();
+                  navigate('/register');
+                }}
+              >
+                📝 Create Account
+              </ModalButton>
+              <ModalButton 
+                $type="tertiary" 
+                onClick={() => setShowLoginModal(false)}
+              >
+                Cancel
+              </ModalButton>
+            </ModalButtonGroup>
+          </ModalContainer>
+        </ModalOverlay>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <ModalOverlay>
+          <ModalContainer $type="error">
+            <ModalIcon>❌</ModalIcon>
+            <ModalTitle>Booking Not Available</ModalTitle>
+            <ModalMessage>
+              {modalMessage.split('\n').map((line, index) => (
+                <React.Fragment key={index}>
+                  {line}
+                  {index < modalMessage.split('\n').length - 1 && <br />}
+                </React.Fragment>
+              ))}
+            </ModalMessage>
+            <ModalButtonGroup>
+              <ModalButton 
+                $type="primary" 
+                onClick={() => setShowErrorModal(false)}
+              >
+                OK
+              </ModalButton>
+            </ModalButtonGroup>
+          </ModalContainer>
+        </ModalOverlay>
+      )}
+    </>
   );
 };
 
+// Existing styled components remain the same...
 const CalendarOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -848,6 +896,142 @@ const BookingPolicy = styled.div`
   font-size: 0.8rem;
   color: #0369a1;
   border: 1px solid #e0f2fe;
+`;
+
+// New Modal Styled Components
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15000;
+  animation: fadeIn 0.3s ease-out;
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+`;
+
+const ModalContainer = styled.div<{ $type: 'success' | 'error' | 'warning' }>`
+  background: white;
+  border-radius: 16px;
+  padding: 32px 24px;
+  width: 400px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+  transform: scale(0.9);
+  animation: modalAppear 0.3s ease-out forwards;
+  
+  ${props => props.$type === 'success' && `
+    border-top: 4px solid #16a34a;
+  `}
+  
+  ${props => props.$type === 'error' && `
+    border-top: 4px solid #dc2626;
+  `}
+  
+  ${props => props.$type === 'warning' && `
+    border-top: 4px solid #f59e0b;
+  `}
+  
+  @keyframes modalAppear {
+    to {
+      transform: scale(1);
+    }
+  }
+`;
+
+const ModalIcon = styled.div`
+  font-size: 3rem;
+  margin-bottom: 16px;
+  animation: bounceIn 0.6s ease-out;
+  
+  @keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+`;
+
+const ModalTitle = styled.h3`
+  margin: 0 0 16px 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 600;
+`;
+
+const ModalMessage = styled.div`
+  color: #6b7280;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 24px;
+  
+  strong {
+    color: #374151;
+    font-weight: 500;
+  }
+`;
+
+const ModalButtonGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  
+  @media (min-width: 480px) {
+    flex-direction: row;
+    justify-content: center;
+  }
+`;
+
+const ModalButton = styled.button<{ $type: 'primary' | 'secondary' | 'tertiary' }>`
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-width: 120px;
+  
+  ${props => props.$type === 'primary' && `
+    background: #3b82f6;
+    color: white;
+    
+    &:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+  `}
+  
+  ${props => props.$type === 'secondary' && `
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    
+    &:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+    }
+  `}
+  
+  ${props => props.$type === 'tertiary' && `
+    background: transparent;
+    color: #6b7280;
+    
+    &:hover {
+      background: #f9fafb;
+      color: #374151;
+    }
+  `}
 `;
 
 export default Calendar;
