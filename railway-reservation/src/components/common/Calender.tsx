@@ -143,15 +143,15 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
     localStorage.setItem('selectedTravelDate', selectedDate);
     localStorage.setItem('selectedTrainId', trainId);
     
-    const bookingData = {
-      trainId: trainId,
-      date: selectedDate,
-      trainName: trainDetails?.trainName,
-      route: `${trainDetails?.source} → ${trainDetails?.destination}`,
-      totalSeats: trainDetails?.totalSeats,
-      availableSeats: seatAvailability[selectedDate]?.availableSeats || 0,
-      timestamp: new Date().toISOString()
-    };
+    // const bookingData = {
+    //   trainId: trainId,
+    //   date: selectedDate,
+    //   trainName: trainDetails?.trainName,
+    //   route: `${trainDetails?.source} → ${trainDetails?.destination}`,
+    //   totalSeats: trainDetails?.totalSeats,
+    //   availableSeats: seatAvailability[selectedDate]?.availableSeats || 0,
+    //   timestamp: new Date().toISOString()
+    // };
     
     setShowSuccessModal(true);
     onDateSelect(selectedDate);

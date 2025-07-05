@@ -8,8 +8,10 @@ const RevenueCard: React.FC = () => {
     useEffect(() => {
       fetchBookedTicket().then(setTickets);
     }, []);
-
-    const totalRevenue = tickets.reduce((acc, ticket) => acc + ticket.amount, 0);
+     
+    let cancelledTickets = tickets.filter(ticket => ticket.status === 'CANCELLED').reduce((acc, ticket) => acc + ticket.amount*.20, 0);
+    let totalRevenue = tickets.filter(ticket => ticket.status === 'CONFIRMED').reduce((acc, ticket) => acc + ticket.amount, 0);
+    totalRevenue += cancelledTickets;
     return (
     <>
   <div className="bg-white/40 backdrop-blur-lg rounded-2xl shadow-lg p-8 flex flex-col items-center justify-center mb-8 border border-white/40">
