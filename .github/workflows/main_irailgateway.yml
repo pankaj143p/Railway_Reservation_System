@@ -33,17 +33,47 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Check directory structure
+        run: |
+          echo "Current directory:"
+          dir
+          echo "Looking for api-gateway:"
+          if exist "api-gateway" (
+            echo "api-gateway directory found"
+            dir api-gateway
+          ) else (
+            echo "api-gateway directory NOT found"
+          )
+        shell: cmd
+
       - name: Build API Gateway with Maven
         run: |
-          cd api-gateway
-          mvn clean package -DskipTests
+          if exist "api-gateway\pom.xml" (
+            echo "Building API Gateway..."
+            cd api-gateway
+            mvn clean package -DskipTests
+          ) else (
+            echo "pom.xml not found in api-gateway"
+            exit 1
+          )
+        shell: cmd
+
+      - name: Verify JAR file
+        run: |
+          if exist "api-gateway\target\*.jar" (
+            echo "JAR file created successfully"
+            dir api-gateway\target\*.jar
+          ) else (
+            echo "No JAR file found"
+            exit 1
+          )
         shell: cmd
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: 'api-gateway/target/*.jar'  # Fixed: correct path to API Gateway JAR
+          path: 'api-gateway/target/*.jar'
 
   deploy:
     runs-on: windows-latest
