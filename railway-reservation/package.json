@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "dev": "vite --host",
     "build": "tsc -b && vite build",
@@ -12,7 +16,8 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "vercel-build": "npm install --legacy-peer-deps && npm run build"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -29,7 +34,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
-    "dot-env": "^0.0.1",
     "dotenv": "^16.5.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.503.0",
@@ -40,7 +44,6 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.6.0",
     "react-spinners": "^0.17.0",
-    "react-swipeable-views-utils": "^0.14.0",
     "styled-components": "^6.1.19",
     "swiper": "^11.2.10",
     "tailwind-merge": "^3.3.0",
@@ -56,8 +59,7 @@
     "@types/cors": "^2.8.18",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
-    "@types/react-helmet-async": "^1.0.1",
-    "@types/react-swipeable-views-utils": "^0.13.7",
+    "@types/react-helmet": "^6.1.6",
     "@vitejs/plugin-react-swc": "^3.8.0",
     "@vitest/ui": "^3.2.4",
     "eslint": "^9.21.0",
@@ -70,5 +72,13 @@
     "typescript-eslint": "^8.24.1",
     "vite": "^6.2.0",
     "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "react": "$react",
+    "react-dom": "$react-dom"
+  },
+  "resolutions": {
+    "react": "$react",
+    "react-dom": "$react-dom"
   }
 }
