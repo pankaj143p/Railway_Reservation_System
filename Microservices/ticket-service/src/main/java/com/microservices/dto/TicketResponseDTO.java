@@ -2,7 +2,7 @@ package com.microservices.dto;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 public class TicketResponseDTO {
@@ -11,6 +11,6 @@ public class TicketResponseDTO {
       private int age;
       private String email;
       private String ticket_number;
-      private LocalDateTime booking_date;
+      private LocalDate booking_date;
       private TrainDTO trainDetails;
 }

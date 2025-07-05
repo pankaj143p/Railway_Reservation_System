@@ -88,7 +88,7 @@ public class TicketController {
         }
     }
 
-    @GetMapping("all")
+    @GetMapping("/all")
     public ResponseEntity<List<TicketBooking>> getAllTickets(){
         List<TicketBooking> tickets = ticketService.getAllTickets();
         logger.info("Fetched all tickets, count: {}", tickets.size());

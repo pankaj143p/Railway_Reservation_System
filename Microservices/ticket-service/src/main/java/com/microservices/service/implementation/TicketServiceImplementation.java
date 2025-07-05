@@ -67,7 +67,7 @@ public class TicketServiceImplementation implements TicketService {
         ticket.setFullName(request.getFullName());
         ticket.setAge(request.getAge());
         ticket.setEmail(request.getEmail());
-        ticket.setBookingDate(LocalDateTime.now());
+        ticket.setBookingDate(request.getDate());
         ticket.setTicketNumber(methods.generateTicketNumber());
         ticket.setTrainId(train_id);
         ticket.setUserEmail(request.getUserEmail());
@@ -83,7 +83,7 @@ public class TicketServiceImplementation implements TicketService {
         ticketRepository.save(ticket);
 
         // 5. Update train seats
-        trainClient.decreaseSeats(train_id, request.getSeatCount());
+        // trainClient.decreaseSeats(train_id, request.getSeatCount());
 
         // 6. Prepare response
         TicketResponseDTO response = new TicketResponseDTO();
@@ -171,7 +171,7 @@ public class TicketServiceImplementation implements TicketService {
             }
 
             // Update ticket status and increase train seats
-            trainClient.increaseSeats(ticket.getTrainId(), ticket.getNoOfSeats());
+            // trainClient.increaseSeats(ticket.getTrainId(), ticket.getNoOfSeats());
             ticket.setStatus(TicketStatus.CANCELLED);
             ticketRepository.save(ticket);
             logger.info("Ticket cancelled: {}", ticketId);
@@ -312,5 +312,7 @@ public class TicketServiceImplementation implements TicketService {
         Integer bookedSeats = ticketRepository.getBookedSeatsCountByTrainAndDate(trainId, date);
         return bookedSeats != null ? bookedSeats : 0;
     }
+
+   
 
 }

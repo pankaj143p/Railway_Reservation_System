@@ -13,7 +13,10 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -145,4 +148,17 @@ public class TrainController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+  @GetMapping("/operational-status/{id}")
+    public String getOperationalStatus(@PathVariable Long id) {
+          try {
+            String opr = trainService.getOperationalStatus(id);
+            logger.info("Fetched train by id: {}", id);
+            return opr;
+        } catch (TrainException e) {
+            logger.error("Train not found: {}", id);
+            return "Train not found";
+        }
+    }
+
 }

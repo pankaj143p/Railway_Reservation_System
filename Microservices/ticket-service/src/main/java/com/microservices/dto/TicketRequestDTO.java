@@ -2,7 +2,8 @@ package com.microservices.dto;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+
 
 @Data
 public class TicketRequestDTO {
@@ -12,7 +13,7 @@ public class TicketRequestDTO {
     private Integer seatCount;
     private int age;
     private String email;
-    private LocalDateTime date;
+    private LocalDate date;
     private String paymentId;
     private String razorpaySignature;
     private String orderId;

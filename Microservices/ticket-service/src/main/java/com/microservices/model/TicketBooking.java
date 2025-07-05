@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -36,7 +37,7 @@ public class TicketBooking {
     @Min(value = 1, message = "Amount must be positive")
     private int amount;
 
-    private LocalDateTime bookingDate;
+    private LocalDate bookingDate;
 
     @NotBlank(message = "User email is required")
     private String userEmail;

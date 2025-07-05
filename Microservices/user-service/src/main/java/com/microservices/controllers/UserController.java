@@ -89,12 +89,12 @@ public class UserController {
     }
     
     // Delete user by ID
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUserById(@PathVariable Long id) {
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> inactiveUser(@PathVariable Long id) {
         try {
             userSer.deleteUser(id);
             logger.info("Deleted user: {}", id);
-            return new ResponseEntity<>("User deleted", HttpStatus.ACCEPTED);
+            return ResponseEntity.ok("User deleted successfully");
         } catch (UserException e) {
             logger.error("Delete failed for user {}: {}", id, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

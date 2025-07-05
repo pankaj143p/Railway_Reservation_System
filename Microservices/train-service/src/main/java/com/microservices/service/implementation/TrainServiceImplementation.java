@@ -174,4 +174,15 @@ public class TrainServiceImplementation implements TrainService {
         logger.info("Increased seats for train {}: now {}", id, train.getTotalSeats());
         return "Seats updated successfully";
     }
+
+    @Override
+    public String getOperationalStatus(Long id) throws TrainException {
+        Optional<TrainDetails> otp = trainRepository.findById(id);
+        if(otp.isPresent()){
+            logger.info("Fetched train by id: {}", id);
+            return otp.get().getOperationalStatus();
+        }
+        logger.warn("Train not found: {}", id);
+        throw new TrainException("Train not found with id : "+id);
+    }
 }

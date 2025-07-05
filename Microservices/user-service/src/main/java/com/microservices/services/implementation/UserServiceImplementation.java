@@ -102,7 +102,9 @@ public AuthResponse loginUser(LoginRequest req) throws UserException {
             logger.warn("Attempt to delete non-existent user: {}", id);
             throw new UserException("User not found with id : "+id);
         }
-        userRep.deleteById(id);
+        User user = otp.get();
+        user.setIsActive(false);
+        userRep.save(user); // Soft delete
         logger.info("Deleted user: {}", id);
     }
    

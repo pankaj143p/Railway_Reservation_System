@@ -19,6 +19,7 @@ public interface TicketService {
     TicketBooking updateTicket(Long id, TicketBooking updatedTicket);
     List<TicketBooking> getTicketByUserEmail(String userEmail);
     int getBookedSeatsCountByTrainAndDate(Long trainId, LocalDate date);
+    // String getOperationalStatus(Long trainId);
 }
 
 

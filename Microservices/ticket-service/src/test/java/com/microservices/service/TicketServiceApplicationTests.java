@@ -111,7 +111,7 @@ class TicketServiceImplementationTest {
         update.setAge(30);
         update.setEmail("priya@gmail.com");
         update.setTicketNumber("TICKET456");
-        update.setBookingDate(LocalDateTime.now());
+        // update.setBookingDate("2023-03-01);
         update.setTrainId(2L);
         update.setTrainName("Shatabdi");
         update.setSource("Delhi");

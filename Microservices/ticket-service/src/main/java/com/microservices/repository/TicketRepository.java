@@ -14,6 +14,6 @@ public interface TicketRepository extends JpaRepository<TicketBooking, Long> {
     Optional<TicketBooking> findByOrderId(String orderId);
     List<TicketBooking> findByUserEmail(String userEmail);
     
-    @Query("SELECT COALESCE(SUM(t.noOfSeats), 0) FROM TicketBooking t WHERE t.trainId = :trainId AND DATE(t.departureTime) = :date AND t.status = 'CONFIRMED'")
+    @Query("SELECT COALESCE(SUM(t.noOfSeats), 0) FROM TicketBooking t WHERE t.trainId = :trainId AND DATE(t.bookingDate) = :date AND t.status = 'CONFIRMED'")
     Integer getBookedSeatsCountByTrainAndDate(@Param("trainId") Long trainId, @Param("date") LocalDate date);
 }

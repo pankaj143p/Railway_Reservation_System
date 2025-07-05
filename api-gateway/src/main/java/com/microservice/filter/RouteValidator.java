@@ -18,6 +18,8 @@ public class RouteValidator {
             "/api/users/reset-password",
             "/tickets/availability/**",
             "/trains/all",
+            "/trains/available/**",
+            "/trains/operational-status/**",
             "/eureka"
     );
 
