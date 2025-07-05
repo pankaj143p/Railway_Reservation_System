@@ -74,7 +74,7 @@ const RevenueCard: React.FC = () => {
   // Calculate ticket statistics
   const confirmedTickets = tickets.filter(ticket => ticket.status === 'CONFIRMED').length;
   const cancelledTicketsCount = tickets.filter(ticket => ticket.status === 'CANCELLED').length;
-  // const pendingTickets = tickets.filter(ticket => ticket.status === 'PENDING').length;
+  // const pendingTickets = tickets.filter(ticket => ticket.status === '').length;
 
   return (
     <>
@@ -87,13 +87,13 @@ const RevenueCard: React.FC = () => {
           ₹ {totalRevenue.toLocaleString('en-IN')}
         </div>
         <div className="text-sm text-blue-600/80 text-center">
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center flex-wrap">
             <span className="bg-green-100/50 px-2 py-1 rounded-lg">
                Confirmed: ₹{confirmedRevenue.toLocaleString('en-IN')}
             </span>
             {cancelledTickets > 0 && (
               <span className="bg-orange-100/50 px-2 py-1 rounded-lg">
-                💸 Cancellation Fee: ₹{cancelledTickets.toLocaleString('en-IN')}
+                Cancellation Fee: ₹{cancelledTickets.toLocaleString('en-IN')}
               </span>
             )}
           </div>
@@ -103,7 +103,7 @@ const RevenueCard: React.FC = () => {
       {/* Total Tickets Sold Card */}
       <div className="bg-white/40 backdrop-blur-lg rounded-2xl shadow-lg p-8 flex flex-col items-center justify-center mb-8 border border-white/40 hover:bg-white/50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl">
         <div className="text-2xl font-semibold text-blue-700 mb-2 flex items-center gap-2">
-          🎫 Total Tickets Sold
+          Total Tickets Sold
         </div>
         <div className="text-4xl font-bold text-blue-900 mb-2">
           {tickets.length}
@@ -115,13 +115,13 @@ const RevenueCard: React.FC = () => {
             </span>
             {cancelledTicketsCount > 0 && (
               <span className="bg-red-100/50 px-2 py-1 rounded-lg text-xs">
-                ❌ Cancelled: {cancelledTicketsCount}
+                 Cancelled: {cancelledTicketsCount}
               </span>
             )}
             {/* {pendingTickets > 0 && (
               <span className="bg-yellow-100/50 px-2 py-1 rounded-lg text-xs">
-                ⏳ Pending: {pendingTickets} */}
-              {/* </span> */}
+                ⏳ Pending: {pendingTickets}
+              </span> */}
             {/* )} */}
           </div>
         </div>
