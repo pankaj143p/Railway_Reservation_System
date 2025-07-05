@@ -1,97 +1,78 @@
-name: Deploy Railway System to Azure
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy JAR app to Azure Web App - irailgateway
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
     paths:
-      - 'Microservices/**'
-      - 'eureka-server/**'
-      - 'api-gateway/**'
-
-env:
-  AZURE_CONTAINER_REGISTRY: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
-  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+      - 'api-gateway/**'  # Only trigger when API Gateway changes
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        service:
-          - name: eureka-server
-            path: eureka-server
-            port: 6010
-          - name: api-gateway
-            path: api-gateway
-            port: 6111
-          - name: user-service
-            path: Microservices/user-service
-            port: 5000
-          - name: train-service
-            path: Microservices/train-service
-            port: 5010
-          - name: ticket-service
-            path: Microservices/ticket-service
-            port: 5020
-          - name: payment-service
-            path: Microservices/payment-service
-            port: 5030
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read #This is required for actions/checkout
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up Java version
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'temurin'
+          distribution: 'microsoft'
 
       - name: Cache Maven dependencies
         uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
 
-      - name: Build ${{ matrix.service.name }}
+      - name: Build API Gateway with Maven
         run: |
-          cd ${{ matrix.service.path }}
+          cd api-gateway
           mvn clean package -DskipTests
+        shell: cmd
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Azure Container Registry
-        uses: azure/docker-login@v1
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
         with:
-          login-server: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+          name: java-app
+          path: 'api-gateway/target/*.jar'  # Fixed: correct path to API Gateway JAR
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
         with:
-          context: ${{ matrix.service.path }}
-          push: true
-          tags: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ matrix.service.name }}:latest
-
+          name: java-app
+      
       - name: Login to Azure
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_AB410EC2644B412EB2FF26359C91448B }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_99AFA2EC9F9B406D96950BAA78E996D5 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_71F3831F2E5F4C3E8EEAE824EA086B94 }}
 
-      - name: Deploy to Azure Container Instance
-        run: |
-          az container create \
-            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-            --name ${{ matrix.service.name }} \
-            --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ matrix.service.name }}:latest \
-            --registry-login-server ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io \
-            --registry-username ${{ secrets.ACR_USERNAME }} \
-            --registry-password ${{ secrets.ACR_PASSWORD }} \
-            --dns-name-label railway-${{ matrix.service.name }}-$(date +%s) \
-            --ports ${{ matrix.service.port }} \
-            --cpu 1 \
-            --memory 1.5 \
-            --environment-variables SPRING_PROFILES_ACTIVE=azure
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'irailgateway'
+          slot-name: 'Production'
+          package: '*.jar'
