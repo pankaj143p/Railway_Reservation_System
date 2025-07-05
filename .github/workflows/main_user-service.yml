@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'Microservices/user-service/**'  # Only trigger when user-service changes
   workflow_dispatch:
 
 jobs:
@@ -22,16 +24,53 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'microsoft'
+          distribution: 'temurin'  # Changed from microsoft to temurin for Ubuntu
 
-      - name: Build with Maven
-        run: mvn clean install
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Check directory structure
+        run: |
+          echo "Current directory:"
+          pwd
+          ls -la
+          echo "Looking for user-service:"
+          if [ -d "Microservices/user-service" ]; then
+            echo "✅ user-service directory found"
+            ls -la Microservices/user-service/
+            if [ -f "Microservices/user-service/pom.xml" ]; then
+              echo "✅ pom.xml found"
+            else
+              echo "❌ pom.xml NOT found"
+            fi
+          else
+            echo "❌ user-service directory NOT found"
+          fi
+
+      - name: Build User Service with Maven
+        working-directory: Microservices/user-service  # THIS IS THE KEY FIX!
+        run: mvn clean package -DskipTests
+
+      - name: Verify JAR file
+        run: |
+          if [ -f Microservices/user-service/target/*.jar ]; then
+            echo "✅ JAR file created successfully"
+            ls -la Microservices/user-service/target/*.jar
+          else
+            echo "❌ No JAR file found"
+            ls -la Microservices/user-service/target/ || echo "Target directory not found"
+            exit 1
+          fi
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}/target/*.jar'
+          path: 'Microservices/user-service/target/*.jar'  # Fixed path
 
   deploy:
     runs-on: ubuntu-latest
@@ -39,6 +78,10 @@ jobs:
     permissions:
       id-token: write #This is required for requesting the JWT
       contents: read #This is required for actions/checkout
+
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
   
     steps:
       - name: Download artifact from build job
@@ -60,4 +103,3 @@ jobs:
           app-name: 'user-service'
           slot-name: 'Production'
           package: '*.jar'
-          
