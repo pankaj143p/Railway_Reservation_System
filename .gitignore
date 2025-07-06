@@ -55,6 +55,16 @@ application-*.yml
 **/application.properties
 **/application.yml
 
+# Azure Configuration Files (Contains sensitive credentials)
+**/application-azure.properties
+application-azure.properties
+eureka-server/src/main/resources/application-azure.properties
+api-gateway/src/main/resources/application-azure.properties
+Microservices/user-service/src/main/resources/application-azure.properties
+Microservices/train-service/src/main/resources/application-azure.properties
+Microservices/ticket-service/src/main/resources/application-azure.properties
+Microservices/payment-service/src/main/resources/application-azure.properties
+
 # Database
 *.db
 *.sqlite
@@ -76,3 +86,9 @@ coverage/
 # Docker
 *.env.docker
 docker-compose.override.yml
+
+# Azure deployment files (if any)
+azure-pipelines.yml
+.azure/
+azure-webapp-publish-settings
+*.PublishSettings
