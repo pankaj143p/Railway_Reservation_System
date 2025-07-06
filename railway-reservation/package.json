@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc -b && vite build",
+    "build": "vite build --outDir build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
