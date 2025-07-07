@@ -20,6 +20,7 @@ public class RouteValidator {
             "/trains/all",
             "/trains/available/**",
             "/trains/operational-status/**",
+            "/trains/getAllInActiveDates/**",
             "/eureka"
     );
 

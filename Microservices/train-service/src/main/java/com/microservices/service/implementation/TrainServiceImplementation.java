@@ -30,13 +30,12 @@ public class TrainServiceImplementation implements TrainService {
         train.setDestination(req.getDestination());
         train.setSource(req.getSource());
         train.setRoutes(req.getRoutes());
-        train.setInactiveDates(req.getInactiveDates());
         train.setArrivalTime(req.getArrivalTime());
         train.setDepartureTime(req.getDepartureTime());
-        train.setStatus(TrainStatus.ON_TIME);
+        train.setStatus(req.getStatus() != null ? req.getStatus() : TrainStatus.ON_TIME);
         train.setAmount(req.getAmount());
         train.setDate(req.getDate());
-
+        train.setInactiveDates(req.getInactiveDates());
         // Set new fields with defaults
         train.setIsActive(req.getIsActive() != null ? req.getIsActive() : true);
         train.setOperationalStatus(req.getOperationalStatus() != null ? req.getOperationalStatus() : "OPERATIONAL");
@@ -68,22 +67,58 @@ public class TrainServiceImplementation implements TrainService {
             throw new TrainException("Train not exist with : "+id);
         }
         TrainDetails exTrain = opt.get();
-        exTrain.setTrainName(req.getTrainName());
-        exTrain.setTotalSeats(req.getTotalSeats());
-        exTrain.setDestination(req.getDestination());
-        exTrain.setSource(req.getSource());
-        exTrain.setRoutes(req.getRoutes());
-        exTrain.setArrivalTime(req.getArrivalTime());
-        exTrain.setDepartureTime(req.getDepartureTime());
-        exTrain.setStatus(TrainStatus.ON_TIME);
-        exTrain.setAmount(req.getAmount());
-        exTrain.setDate(req.getDate());
-        exTrain.setInactiveDates(req.getInactiveDates());
+        
+        // Log the incoming request for debugging
+        logger.info("Updating train {} with data: {}", id, req);
+        
+        // Only update non-null fields to allow partial updates
+        if (req.getTrainName() != null && !req.getTrainName().trim().isEmpty()) {
+            exTrain.setTrainName(req.getTrainName());
+        }
+        if (req.getTotalSeats() != 0 && req.getTotalSeats() > 0) {
+            exTrain.setTotalSeats(req.getTotalSeats());
+        }
+        if (req.getDestination() != null && !req.getDestination().trim().isEmpty()) {
+            exTrain.setDestination(req.getDestination());
+        }
+        if (req.getSource() != null && !req.getSource().trim().isEmpty()) {
+            exTrain.setSource(req.getSource());
+        }
+        if (req.getRoutes() != null) {
+            exTrain.setRoutes(req.getRoutes());
+        }
+        if (req.getArrivalTime() != null) {
+            exTrain.setArrivalTime(req.getArrivalTime());
+        }
+        if (req.getDepartureTime() != null) {
+            exTrain.setDepartureTime(req.getDepartureTime());
+        }
+        // IMPORTANT: Only update status if it's provided and valid
+        if (req.getStatus() != null) {
+            logger.info("Updating status from {} to {}", exTrain.getStatus(), req.getStatus());
+            exTrain.setStatus(req.getStatus());
+        }
+        if (req.getAmount() != null) {
+            exTrain.setAmount(req.getAmount());
+        }
+        if (req.getDate() != null) {
+            exTrain.setDate(req.getDate());
+        }
+        if (req.getInactiveDates() != null) {
+            exTrain.setInactiveDates(req.getInactiveDates());
+        }
         // Update new fields
-        exTrain.setIsActive(req.getIsActive() != null ? req.getIsActive() : true);
-        exTrain.setOperationalStatus(req.getOperationalStatus() != null ? req.getOperationalStatus() : "OPERATIONAL");
-        exTrain.setMaintenanceNotes(req.getMaintenanceNotes());
-        logger.info("Updated train: {}", id);
+        if (req.getIsActive() != null) {
+            exTrain.setIsActive(req.getIsActive());
+        }
+        if (req.getOperationalStatus() != null && !req.getOperationalStatus().trim().isEmpty()) {
+            exTrain.setOperationalStatus(req.getOperationalStatus());
+        }
+        if (req.getMaintenanceNotes() != null) {
+            exTrain.setMaintenanceNotes(req.getMaintenanceNotes());
+        }
+        
+        logger.info("Saving updated train: {}", exTrain);
         return trainRepository.save(exTrain);
     }
 
@@ -111,17 +146,45 @@ public class TrainServiceImplementation implements TrainService {
         throw new TrainException("Train not found with id : "+id);
     }
 
-    // Mark train delayed (not implemented)
+    // Mark train delayed
     @Override
-    public TrainDetails markTrainDelayed(Long id) { return null; }
+    public TrainDetails markTrainDelayed(Long id) throws TrainException {
+        Optional<TrainDetails> opt = trainRepository.findById(id);
+        if(opt.isEmpty()){
+            logger.warn("Train not found for delay marking: {}", id);
+            throw new TrainException("Train not found with id : "+id);
+        }
+        TrainDetails train = opt.get();
+        train.setStatus(TrainStatus.DELAYED);
+        logger.info("Marked train as delayed: {}", id);
+        return trainRepository.save(train);
+    }
 
-    // Cancel train (not implemented)
+    // Cancel train
     @Override
-    public TrainDetails cancelTrain(Long id) { return null; }
+    public TrainDetails cancelTrain(Long id) throws TrainException {
+        Optional<TrainDetails> opt = trainRepository.findById(id);
+        if(opt.isEmpty()){
+            logger.warn("Train not found for cancellation: {}", id);
+            throw new TrainException("Train not found with id : "+id);
+        }
+        TrainDetails train = opt.get();
+        train.setStatus(TrainStatus.CANCELLED);
+        logger.info("Cancelled train: {}", id);
+        return trainRepository.save(train);
+    }
 
-    // Get train status (not implemented)
+    // Get train status
     @Override
-    public String getTrainStatus(Long id) { return ""; }
+    public String getTrainStatus(Long id) throws TrainException {
+        Optional<TrainDetails> otp = trainRepository.findById(id);
+        if(otp.isPresent()){
+            logger.info("Fetched train status for id: {}", id);
+            return otp.get().getStatus().toString();
+        }
+        logger.warn("Train not found: {}", id);
+        throw new TrainException("Train not found with id : "+id);
+    }
 
     // Get today's trains
     @Override
@@ -182,7 +245,7 @@ public class TrainServiceImplementation implements TrainService {
     public String getOperationalStatus(Long id) throws TrainException {
         Optional<TrainDetails> otp = trainRepository.findById(id);
         if(otp.isPresent()){
-            logger.info("Fetched train by id: {}", id);
+            logger.info("Fetched operational status for train id: {}", id);
             return otp.get().getOperationalStatus();
         }
         logger.warn("Train not found: {}", id);
@@ -190,7 +253,13 @@ public class TrainServiceImplementation implements TrainService {
     }
 
     @Override
-    public List<LocalDate> getAllInActiveDates(Long trainId) {
-       return trainRepository.getALlInActiveDates(trainId);
+    public List<LocalDate> getALlInActiveDates(Long id) throws TrainException {
+        Optional<TrainDetails> otp = trainRepository.findById(id);
+        if(otp.isPresent()){
+            logger.info("Fetched inactive dates for train id: {}", id);
+            return otp.get().getInactiveDates();
+        }
+        logger.warn("Train not found: {}", id);
+        throw new TrainException("Train not found with id : "+id);
     }
 }

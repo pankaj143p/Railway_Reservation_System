@@ -13,14 +13,14 @@ public interface TrainService {
     TrainDetails updateTrain(Long id, TrainDetails train) throws TrainException;
     void deleteTrain(Long id) throws TrainException;
     TrainDetails getTrainById(Long id) throws TrainException;
-    TrainDetails markTrainDelayed(Long id);
-    TrainDetails cancelTrain(Long id);
-    String getTrainStatus(Long id);
+    TrainDetails markTrainDelayed(Long id) throws TrainException;
+    TrainDetails cancelTrain(Long id) throws TrainException;
+    String getTrainStatus(Long id) throws TrainException;
     List<TrainDetails> getTodayTrains();
     List<TrainDetails> getTrainsByDate(LocalDate date);
     List<TrainDetails> getTrainsBySourceAndDestination(String source, String destination);
     String decreaseSeats(Long id, int cnt);
     String increaseSeats(Long id, int cnt);
     String getOperationalStatus(Long trainId) throws TrainException;
-    List<LocalDate> getAllInActiveDates(Long trainId); 
+    List<LocalDate> getALlInActiveDates(Long id) throws TrainException;
 }

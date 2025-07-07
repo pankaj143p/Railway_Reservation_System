@@ -10,8 +10,8 @@ export interface Train {
   arrivalTime: string;
   date: string;
   routes: string[];
-  // New fields for multi-date booking
-  operationalDays?: string[]; // Days of week this train operates (e.g., ['MON', 'TUE', 'WED'])
+  inactiveDates: string[];
+  operationalDays: string[];
   availableSeats?: { [date: string]: number }; // Date-wise available seats
   validUntil?: string; // Last date for booking (default: 3 months from creation)
   // New admin fields

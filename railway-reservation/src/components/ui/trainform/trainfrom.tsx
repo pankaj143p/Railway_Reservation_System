@@ -20,6 +20,7 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
     arrivalTime: "",
     date: "",
     routes: [],
+    inactiveDates: [],
     operationalStatus: "OPERATIONAL",
     maintenanceNotes: "",
     isActive: true,
@@ -27,35 +28,40 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
 
   // Dynamic routes state
   const [routes, setRoutes] = useState<string[]>([""]);
+  const [inactiveDates, setInactiveDates] = useState<string[]>([""]);
 
   useEffect(() => {
-    setForm(
-      initialData
-        ? { ...initialData }
-        : {
-            trainName: "",
-            source: "",
-            destination: "",
-            totalSeats: 0,
-            amount: 0,
-            status: "",
-            departureTime: "",
-            arrivalTime: "",
-            date: "",
-            routes: [],
-            operationalStatus: "OPERATIONAL",
-            maintenanceNotes: "",
-            isActive: true,
-          }
-    );
-    setRoutes(initialData?.routes && initialData.routes.length > 0 ? [...initialData.routes] : [""]);
+    if (initialData) {
+      setForm({ ...initialData });
+      setRoutes(initialData?.routes && initialData.routes.length > 0 ? [...initialData.routes] : [""]);
+      setInactiveDates(initialData?.inactiveDates && initialData.inactiveDates.length > 0 ? [...initialData.inactiveDates] : [""]);
+    } else {
+      setForm({
+        trainName: "",
+        source: "",
+        destination: "",
+        totalSeats: 0,
+        amount: 0,
+        status: "",
+        departureTime: "",
+        arrivalTime: "",
+        date: "",
+        routes: [],
+        inactiveDates: [],
+        operationalStatus: "OPERATIONAL",
+        maintenanceNotes: "",
+        isActive: true,
+      });
+      setRoutes([""]);
+      setInactiveDates([""]);
+    }
   }, [initialData, open]);
 
   // Handle input changes and ensure numbers are numbers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> | any) => {
     const { name, value, type } = e.target;
     if (type === "number") {
-      setForm({ ...form, [name]: value === "" ? "" : Number(value) });
+      setForm({ ...form, [name]: value === "" ? 0 : Number(value) });
     } else if (type === "boolean") {
       setForm({ ...form, [name]: value });
     } else {
@@ -68,18 +74,38 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
     const newRoutes = [...routes];
     newRoutes[idx] = value;
     setRoutes(newRoutes);
-    setForm({ ...form, routes: newRoutes });
+    setForm({ ...form, routes: newRoutes.filter(r => r.trim() !== "") });
+  };
+
+  const handleInactiveDateChange = (idx: number, value: string) => {
+    const newDates = [...inactiveDates];
+    newDates[idx] = value;
+    setInactiveDates(newDates);
+    setForm({ ...form, inactiveDates: newDates.filter(d => d.trim() !== "") });
   };
 
   const addRoute = () => {
-    setRoutes([...routes, ""]);
-    setForm({ ...form, routes: [...routes, ""] });
+    const newRoutes = [...routes, ""];
+    setRoutes(newRoutes);
+    setForm({ ...form, routes: routes.filter(r => r.trim() !== "") });
+  };
+  
+  const addInactiveDate = () => {
+    const newDates = [...inactiveDates, ""];
+    setInactiveDates(newDates);
+    setForm({ ...form, inactiveDates: inactiveDates.filter(d => d.trim() !== "") });
   };
 
   const removeRoute = (idx: number) => {
     const newRoutes = routes.filter((_, i) => i !== idx);
     setRoutes(newRoutes.length ? newRoutes : [""]);
-    setForm({ ...form, routes: newRoutes.length ? newRoutes : [""] });
+    setForm({ ...form, routes: newRoutes.filter(r => r.trim() !== "") });
+  };
+
+  const removeInactiveDate = (idx: number) => {
+    const newDates = inactiveDates.filter((_, i) => i !== idx);
+    setInactiveDates(newDates.length ? newDates : [""]);
+    setForm({ ...form, inactiveDates: newDates.filter(d => d.trim() !== "") });
   };
 
   // Ensure time is in HH:mm:ss format
@@ -88,20 +114,27 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Remove empty routes before submit
+    
+    // Remove empty routes and inactive dates before submit
     const cleanedRoutes = routes.filter(r => r.trim() !== "");
-    onSubmit({
+    const cleanedInactiveDates = inactiveDates.filter(d => d.trim() !== "");
+    
+    const submitData = {
       ...form,
-      totalSeats: Number(form.totalSeats),
-      amount: Number(form.amount),
+      totalSeats: Number(form.totalSeats) || 0,
+      amount: Number(form.amount) || 0,
       departureTime: formatTime(form.departureTime || ""),
       arrivalTime: formatTime(form.arrivalTime || ""),
-      date: form.date, // input type="date" gives "YYYY-MM-DD"
+      date: form.date,
       routes: cleanedRoutes,
       operationalStatus: form.operationalStatus || "OPERATIONAL",
       maintenanceNotes: form.maintenanceNotes || "",
+      inactiveDates: cleanedInactiveDates,
       isActive: form.isActive !== undefined ? form.isActive : true,
-    });
+    };
+
+    console.log("Submitting train data:", submitData);
+    onSubmit(submitData);
     onClose();
   };
 
@@ -119,17 +152,85 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
         </button>
         <h3 className="text-xl font-bold mb-4 text-blue-900">{initialData ? "Edit Train" : "Add New Train"}</h3>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input name="trainName" value={form.trainName || ""} onChange={handleChange} placeholder="Train Name" className="border rounded px-3 py-2 bg-white/60" required />
-          <input name="source" value={form.source || ""} onChange={handleChange} placeholder="Source" className="border rounded px-3 py-2 bg-white/60" required />
-          <input name="destination" value={form.destination || ""} onChange={handleChange} placeholder="Destination" className="border rounded px-3 py-2 bg-white/60" required />
-          <input name="totalSeats" type="number" value={form.totalSeats || ""} onChange={handleChange} placeholder="Total Seats" className="border rounded px-3 py-2 bg-white/60" required />
-          <input name="amount" type="number" value={form.amount || ""} onChange={handleChange} placeholder="Amount" className="border rounded px-3 py-2 bg-white/60" required />
-          <input name="status" value={form.status || ""} onChange={handleChange} placeholder="Status" className="border rounded px-3 py-2 bg-white/60" required />
-          <input name="departureTime" type="time" value={form.departureTime || ""} onChange={handleChange} placeholder="Departure Time" className="border rounded px-3 py-2 bg-white/60" required />
-          <input name="arrivalTime" type="time" value={form.arrivalTime || ""} onChange={handleChange} placeholder="Arrival Time" className="border rounded px-3 py-2 bg-white/60" required />
-          <input name="date" type="date" value={form.date || ""} onChange={handleChange} placeholder="Journey Date" className="border rounded px-3 py-2 bg-white/60" required />
+          <input 
+            name="trainName" 
+            value={form.trainName || ""} 
+            onChange={handleChange} 
+            placeholder="Train Name" 
+            className="border rounded px-3 py-2 bg-white/60" 
+            required 
+          />
+          <input 
+            name="source" 
+            value={form.source || ""} 
+            onChange={handleChange} 
+            placeholder="Source" 
+            className="border rounded px-3 py-2 bg-white/60" 
+            required 
+          />
+          <input 
+            name="destination" 
+            value={form.destination || ""} 
+            onChange={handleChange} 
+            placeholder="Destination" 
+            className="border rounded px-3 py-2 bg-white/60" 
+            required 
+          />
+          <input 
+            name="totalSeats" 
+            type="number" 
+            value={form.totalSeats || ""} 
+            onChange={handleChange} 
+            placeholder="Total Seats" 
+            className="border rounded px-3 py-2 bg-white/60" 
+            required 
+          />
+          <input 
+            name="amount" 
+            type="number" 
+            value={form.amount || ""} 
+            onChange={handleChange} 
+            placeholder="Amount" 
+            className="border rounded px-3 py-2 bg-white/60" 
+            required 
+          />
+          <input 
+            name="status" 
+            value={form.status || ""} 
+            onChange={handleChange} 
+            placeholder="Status" 
+            className="border rounded px-3 py-2 bg-white/60" 
+            required 
+          />
+          <input 
+            name="departureTime" 
+            type="time" 
+            value={form.departureTime || ""} 
+            onChange={handleChange} 
+            placeholder="Departure Time" 
+            className="border rounded px-3 py-2 bg-white/60" 
+            required 
+          />
+          <input 
+            name="arrivalTime" 
+            type="time" 
+            value={form.arrivalTime || ""} 
+            onChange={handleChange} 
+            placeholder="Arrival Time" 
+            className="border rounded px-3 py-2 bg-white/60" 
+            required 
+          />
+          <input 
+            name="date" 
+            type="date" 
+            value={form.date || ""} 
+            onChange={handleChange} 
+            placeholder="Journey Date" 
+            className="border rounded px-3 py-2 bg-white/60" 
+            required 
+          />
 
-          {/* New Operational Status Field */}
+          {/* Operational Status Field */}
           <div>
             <label className="block mb-1 font-medium text-blue-900">Operational Status</label>
             <select
@@ -146,7 +247,7 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
             </select>
           </div>
 
-          {/* New Maintenance Notes Field */}
+          {/* Maintenance Notes Field */}
           <div>
             <label className="block mb-1 font-medium text-blue-900">Maintenance Notes</label>
             <textarea
@@ -159,7 +260,7 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
             />
           </div>
 
-          {/* New IsActive Field */}
+          {/* IsActive Field */}
           <div>
             <label className="block mb-1 font-medium text-blue-900">Train Status</label>
             <select
@@ -192,7 +293,6 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
                   onChange={e => handleRouteChange(idx, e.target.value)}
                   className="border rounded px-3 py-2 flex-1 bg-white/60"
                   placeholder={`Route ${idx + 1}`}
-                  required
                 />
                 {routes.length > 1 && (
                   <button
@@ -212,6 +312,38 @@ const TrainForm: React.FC<TrainFormProps> = ({ open, onClose, onSubmit, initialD
               className="bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition text-xs"
             >
               + Add Route
+            </button>
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium text-blue-900">Inactive Dates</label>
+            {inactiveDates.map((date, idx) => (
+              <div key={idx} className="flex gap-2 mb-2">
+                <input
+                  type="date"
+                  value={date}
+                  onChange={e => handleInactiveDateChange(idx, e.target.value)}
+                  className="border rounded px-3 py-2 flex-1 bg-white/60"
+                  placeholder={`Inactive Date ${idx + 1}`}
+                />
+                {inactiveDates.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeInactiveDate(idx)}
+                    className="text-red-500 px-2"
+                    title="Remove inactive date"
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addInactiveDate}
+              className="bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition text-xs"
+            >
+              + Add Inactive Date
             </button>
           </div>
 

@@ -3,6 +3,7 @@ import { Train } from "../../../interfaces/Train";
 import { fetchTrains, addTrain, updateTrain } from "../../../services/api/trainservice";
 import TrainForm from "../../../components/ui/trainform/trainfrom";
 import RoutesModal from "../../../components/ui/trainform/trainroutes";
+import InactiveDatesModal from "../../../components/ui/trainform/trainInActiveDatesModel";
 
 const TrainsPage: React.FC = () => {
   const [trains, setTrains] = useState<Train[]>([]);
@@ -11,74 +12,84 @@ const TrainsPage: React.FC = () => {
   const [showInactive, setShowInactive] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [trainToDelete, setTrainToDelete] = useState<Train | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // For routes modal
   const [routesModalOpen, setRoutesModalOpen] = useState(false);
   const [routesTrain, setRoutesTrain] = useState<Train | null>(null);
 
+  // For inactive dates modal
+  const [inactiveDatesModalOpen, setInactiveDatesModalOpen] = useState(false);
+  const [inactiveDatesTrain, setInactiveDatesTrain] = useState<Train | null>(null);
+
   useEffect(() => {
-    console.log("Fetching trains...");
-    fetchTrains()
-      .then(data => {
-        console.log("Trains fetched:", data, "Type:", typeof data, "Is Array:", Array.isArray(data));
-        // Ensure we always have an array
-        if (Array.isArray(data)) {
-          setTrains(data);
-        } else {
-          console.error("fetchTrains did not return an array:", data);
-          setTrains([]);
-        }
-      })
-      .catch(error => {
-        console.error("Error fetching trains:", error);
-        setTrains([]);
-      });
+    loadTrains();
   }, []);
 
-//  const handleAdd = async (train: Partial<Train>) => {
-//   // Remove trainId if present
-//   const { trainId, ...trainData } = train;
-//   try {
-//     await addTrain(trainData);
-//     const updatedTrains = await fetchTrains();
-//     setTrains(updatedTrains);
-//     console.log("Train added successfully:", trainData);
-//   } catch (err) {
-//     alert("Failed to add train. See console for details.");
-//     console.error("Add train error:", err);
-//   }
-// };
-
+  const loadTrains = async () => {
+    setLoading(true);
+    try {
+      console.log("Fetching trains...");
+      const data = await fetchTrains();
+      console.log("Trains fetched:", data, "Type:", typeof data, "Is Array:", Array.isArray(data));
+      
+      if (Array.isArray(data)) {
+        setTrains(data);
+      } else {
+        console.error("fetchTrains did not return an array:", data);
+        setTrains([]);
+      }
+    } catch (error) {
+      console.error("Error fetching trains:", error);
+      setTrains([]);
+      alert("Failed to fetch trains. Please refresh the page.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAdd = async (train: Partial<Train>) => {
+    setLoading(true);
     try {
+      console.log("Adding train:", train);
       const newTrain = await addTrain(train);
-      if (Array.isArray(trains)) {
-        setTrains([...trains, newTrain]);
-      } else {
-        setTrains([newTrain]);
-      }
+      console.log("Train added successfully:", newTrain);
+      
+      // Refresh the trains list to get the latest data
+      await loadTrains();
+      
+      alert("Train added successfully!");
     } catch (err) {
-      alert("Failed to add train. See console for details.");
       console.error("Add train error:", err);
+      alert("Failed to add train. Please check the console for details.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUpdate = async (train: Partial<Train>) => {
-    if (!editingTrain) return;
+    if (!editingTrain) {
+      console.error("No train selected for editing");
+      return;
+    }
+    
+    setLoading(true);
     try {
-      await updateTrain(editingTrain.trainId, train);
-      const updatedTrains = await fetchTrains();
-      if (Array.isArray(updatedTrains)) {
-        setTrains(updatedTrains);
-      } else {
-        console.error("fetchTrains did not return an array:", updatedTrains);
-        setTrains([]);
-      }
+      console.log("Updating train:", editingTrain.trainId, "with data:", train);
+      
+      const updatedTrain = await updateTrain(editingTrain.trainId, train);
+      console.log("Train updated successfully:", updatedTrain);
+      
+      // Refresh the trains list to get the latest data
+      await loadTrains();
+      
       setEditingTrain(null);
+      alert("Train updated successfully!");
     } catch (err) {
-      alert("Failed to update train. See console for details.");
       console.error("Update train error:", err);
+      alert("Failed to update train. Please check the console for details.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,16 +106,22 @@ const TrainsPage: React.FC = () => {
   const confirmDelete = async () => {
     if (!trainToDelete) return;
     
+    setLoading(true);
     try {
-      // Soft delete: update the train with isActive = false instead of deleting
+      console.log("Deactivating train:", trainToDelete.trainId);
       await updateTrain(trainToDelete.trainId, { isActive: false });
-      const updatedTrains = await fetchTrains();
-      setTrains(updatedTrains);
+      
+      // Refresh the trains list
+      await loadTrains();
+      
       setDeleteConfirmOpen(false);
       setTrainToDelete(null);
+      alert("Train deactivated successfully!");
     } catch (err) {
-      alert("Failed to deactivate train. See console for details.");
       console.error("Soft delete train error:", err);
+      alert("Failed to deactivate train. Please check the console for details.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,15 +131,30 @@ const TrainsPage: React.FC = () => {
   };
 
   const handleReactivate = async (trainId: number) => {
+    setLoading(true);
     try {
+      console.log("Reactivating train:", trainId);
       await updateTrain(trainId, { isActive: true });
-      const updatedTrains = await fetchTrains();
-      setTrains(updatedTrains);
+      
+      // Refresh the trains list
+      await loadTrains();
+      
+      alert("Train reactivated successfully!");
     } catch (err) {
-      alert("Failed to reactivate train. See console for details.");
       console.error("Reactivate train error:", err);
+      alert("Failed to reactivate train. Please check the console for details.");
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-8 min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex items-center justify-center">
+        <div className="text-blue-900 text-lg">Loading trains...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-8 min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200">
@@ -141,6 +173,7 @@ const TrainsPage: React.FC = () => {
           <button
             onClick={() => { setEditingTrain(null); setFormOpen(true); }}
             className="bg-blue-900 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+            disabled={loading}
           >
             + Add New Train
           </button>
@@ -158,9 +191,9 @@ const TrainsPage: React.FC = () => {
           <div>Departure</div>
           <div>Arrival</div>
           <div>Operational</div>
-          <div>Notes</div>
           <div>Active</div>
           <div>Routes</div>
+          <div>Inactive Dates</div>
           <div>Actions</div>
         </div>
         <div className="flex flex-col gap-4">
@@ -196,9 +229,6 @@ const TrainsPage: React.FC = () => {
                   {t.operationalStatus || 'OPERATIONAL'}
                 </span>
               </div>
-              <div className="max-w-20 truncate" title={t.maintenanceNotes || ''}>
-                {t.maintenanceNotes || '-'}
-              </div>
               <div>
                 <span className={`px-2 py-1 rounded text-xs ${
                   t.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -210,8 +240,18 @@ const TrainsPage: React.FC = () => {
                 <button
                   onClick={() => { setRoutesTrain(t); setRoutesModalOpen(true); }}
                   className="bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition text-xs"
+                  disabled={loading}
                 >
                   Routes
+                </button>
+              </div>
+              <div>
+                <button
+                  onClick={() => { setInactiveDatesTrain(t); setInactiveDatesModalOpen(true); }}
+                  className="bg-orange-100 text-orange-700 px-2 py-1 rounded hover:bg-orange-200 transition text-xs"
+                  disabled={loading}
+                >
+                  Dates
                 </button>
               </div>
               <div className="flex gap-2">
@@ -219,8 +259,8 @@ const TrainsPage: React.FC = () => {
                   onClick={() => { setEditingTrain(t); setFormOpen(true); }}
                   className="p-2 rounded hover:bg-yellow-100 transition"
                   aria-label="Edit"
+                  disabled={loading}
                 >
-                  {/* EditIcon */}
                   <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6-6 3 3-6 6H9v-3z" />
                   </svg>
@@ -231,8 +271,8 @@ const TrainsPage: React.FC = () => {
                     className="p-2 rounded hover:bg-red-100 transition"
                     aria-label="Deactivate Train"
                     title="Deactivate Train"
+                    disabled={loading}
                   >
-                    {/* DeleteIcon */}
                     <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -243,8 +283,8 @@ const TrainsPage: React.FC = () => {
                     className="p-2 rounded hover:bg-green-100 transition"
                     aria-label="Reactivate Train"
                     title="Reactivate Train"
+                    disabled={loading}
                   >
-                    {/* ReactivateIcon */}
                     <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -272,6 +312,11 @@ const TrainsPage: React.FC = () => {
         routes={routesTrain?.routes || []}
         onClose={() => { setRoutesModalOpen(false); setRoutesTrain(null); }}
       />
+      <InactiveDatesModal
+        open={inactiveDatesModalOpen}
+        inactiveDates={inactiveDatesTrain?.inactiveDates || []}
+        onClose={() => { setInactiveDatesModalOpen(false); setInactiveDatesTrain(null); }}
+      />
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmOpen && (
@@ -288,14 +333,16 @@ const TrainsPage: React.FC = () => {
               <button
                 onClick={cancelDelete}
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+                disabled={loading}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                disabled={loading}
               >
-                Deactivate Train
+                {loading ? "Processing..." : "Deactivate Train"}
               </button>
             </div>
           </div>
