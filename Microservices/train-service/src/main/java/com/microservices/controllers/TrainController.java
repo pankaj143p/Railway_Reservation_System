@@ -13,9 +13,10 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 @RestController
@@ -159,6 +160,11 @@ public class TrainController {
             logger.error("Train not found: {}", id);
             return "Train not found";
         }
+    }
+
+    @GetMapping("/getAllInActiveDates/{id}")
+    public List<LocalDate> getAllInActiveDates(@PathVariable Long id){
+        return trainService.getAllInActiveDates(id);
     }
 
 }

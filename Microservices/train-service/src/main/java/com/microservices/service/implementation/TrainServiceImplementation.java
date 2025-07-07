@@ -30,11 +30,13 @@ public class TrainServiceImplementation implements TrainService {
         train.setDestination(req.getDestination());
         train.setSource(req.getSource());
         train.setRoutes(req.getRoutes());
+        train.setInactiveDates(req.getInactiveDates());
         train.setArrivalTime(req.getArrivalTime());
         train.setDepartureTime(req.getDepartureTime());
         train.setStatus(TrainStatus.ON_TIME);
         train.setAmount(req.getAmount());
         train.setDate(req.getDate());
+
         // Set new fields with defaults
         train.setIsActive(req.getIsActive() != null ? req.getIsActive() : true);
         train.setOperationalStatus(req.getOperationalStatus() != null ? req.getOperationalStatus() : "OPERATIONAL");
@@ -76,6 +78,7 @@ public class TrainServiceImplementation implements TrainService {
         exTrain.setStatus(TrainStatus.ON_TIME);
         exTrain.setAmount(req.getAmount());
         exTrain.setDate(req.getDate());
+        exTrain.setInactiveDates(req.getInactiveDates());
         // Update new fields
         exTrain.setIsActive(req.getIsActive() != null ? req.getIsActive() : true);
         exTrain.setOperationalStatus(req.getOperationalStatus() != null ? req.getOperationalStatus() : "OPERATIONAL");
@@ -184,5 +187,10 @@ public class TrainServiceImplementation implements TrainService {
         }
         logger.warn("Train not found: {}", id);
         throw new TrainException("Train not found with id : "+id);
+    }
+
+    @Override
+    public List<LocalDate> getAllInActiveDates(Long trainId) {
+       return trainRepository.getALlInActiveDates(trainId);
     }
 }

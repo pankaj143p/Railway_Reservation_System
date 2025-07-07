@@ -54,7 +54,7 @@ const RevenueCard: React.FC = () => {
           onClick={() => window.location.reload()} 
           className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
         >
-          🔄 Retry
+          Retry
         </button>
       </div>
     );

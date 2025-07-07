@@ -7,6 +7,7 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+
 @Data
 @Entity
 @Table(name = "train_details")
@@ -35,6 +36,11 @@ public class TrainDetails {
     @NotEmpty(message = "Routes cannot be empty")
     private List<@NotBlank(message = "Route cannot be blank") String> routes;
 
+    @ElementCollection
+    @CollectionTable(name = "train_inactive_dates", joinColumns = @JoinColumn(name = "train_id"))
+    @Column(name = "inactive_date")
+    private List<LocalDate> inactiveDates;
+
     @NotNull(message = "Departure time is required")
     @Column(nullable = false)
     private LocalTime departureTime;
@@ -44,9 +50,10 @@ public class TrainDetails {
     private LocalTime arrivalTime;
 
     @NotNull(message = "Status is required")
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "train_status_enum")
     private TrainStatus status;
-    
+
     @NotNull(message = "Amount is required")
     @Min(value = 0, message = "Amount must be non-negative")
     @Column(nullable = false)
@@ -70,5 +77,9 @@ public class TrainDetails {
     // Setter for routes (for validation)
     public void setRoutes(List<String> routes2) {
         this.routes = routes2;
+    }
+
+    public void setInactiveDays(List<LocalDate> inactiveDates1) {
+        this.inactiveDates = inactiveDates1;
     }
 }

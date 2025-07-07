@@ -22,4 +22,5 @@ public interface TrainService {
     String decreaseSeats(Long id, int cnt);
     String increaseSeats(Long id, int cnt);
     String getOperationalStatus(Long trainId) throws TrainException;
+    List<LocalDate> getAllInActiveDates(Long trainId); 
 }
