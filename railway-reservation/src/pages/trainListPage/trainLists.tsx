@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchAvailableTrains } from "../../services/trainService";
 import { Train } from "../../interfaces/Train";
 import Card from "../../components/ui/card/Card";
@@ -13,7 +13,11 @@ const TrainDetails = () => {
   const [destinationStation, setDestinationStation] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [validationError, setValidationError] = useState("");
-
+    
+  // pagination 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [trainsPerPage] = useState(9);
+  
   useEffect(() => {
     const getTrains = async () => {
       const data = await fetchAvailableTrains();
@@ -24,6 +28,27 @@ const TrainDetails = () => {
     };
     getTrains();
   }, []);
+  
+   const paginationData = useMemo(() => {
+    const totalTrains = filteredTrains.length;
+    const totalPages = Math.ceil(totalTrains / trainsPerPage);
+    const startIndex = (currentPage - 1) * trainsPerPage;
+    const endIndex = startIndex + trainsPerPage;
+    const currentTrains = filteredTrains.slice(startIndex, endIndex);
+
+    return {
+      totalTrains,
+      totalPages,
+      currentTrains,
+      startIndex,
+      endIndex: Math.min(endIndex, totalTrains)
+    };
+  }, [filteredTrains, currentPage, trainsPerPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredTrains]);
+
 
   const handleSearch = async () => {
     // Clear any previous validation errors
@@ -93,6 +118,46 @@ const TrainDetails = () => {
     setDestinationStation("");
     setValidationError("");
     setFilteredTrains(trains);
+  };
+
+    const goToPage = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of results
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < paginationData.totalPages) {
+      goToPage(currentPage + 1);
+    }
+  };
+  
+   const getPageNumbers = () => {
+    const pages = [];
+    const totalPages = paginationData.totalPages;
+    
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show smart pagination
+      if (currentPage <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    
+    return pages;
   };
 
   return (
@@ -215,6 +280,20 @@ const TrainDetails = () => {
           </div>
         </div>
       </div>
+      
+      {/* Pagination Controls */}
+       {filteredTrains.length > 0 && (
+        <div className="w-full max-w-7xl mb-4">
+          <div className="flex justify-between items-center text-sm text-gray-600">
+            <span>
+              Showing {paginationData.startIndex + 1}-{paginationData.endIndex} of {paginationData.totalTrains} trains
+            </span>
+            <span>
+              Page {currentPage} of {paginationData.totalPages}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
         {filteredTrains.length > 0 ? (
@@ -230,6 +309,71 @@ const TrainDetails = () => {
           </p>
         )}
       </div>
+
+        {/* Pagination Controls */}
+      {paginationData.totalPages > 1 && (
+        <div className="w-full max-w-7xl flex justify-center items-center space-x-2 mb-8">
+          {/* Previous Button */}
+          <button
+            onClick={goToPreviousPage}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+
+          {/* Page Numbers */}
+          <div className="flex space-x-1">
+            {getPageNumbers().map((page, index) => (
+              <div key={index}>
+                {page === '...' ? (
+                  <span className="px-3 py-2 text-sm text-gray-400">...</span>
+                ) : (
+                  <button
+                     onClick={() => goToPage(page as number)}
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      currentPage === page
+                        ? 'bg-cyan-600 text-white border border-cyan-600'
+                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Next Button */}
+          <button
+            onClick={goToNextPage}
+            disabled={currentPage === paginationData.totalPages}
+            className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      )}
+       {/* Quick Jump to Page */}
+      {paginationData.totalPages > 5 && (
+        <div className="w-full max-w-7xl flex justify-center items-center space-x-2 text-sm text-gray-600">
+          <span>Jump to page:</span>
+          <input
+            type="number"
+            min="1"
+            max={paginationData.totalPages}
+            value={currentPage}
+            onChange={(e) => {
+              const page = parseInt(e.target.value);
+              if (page >= 1 && page <= paginationData.totalPages) {
+                goToPage(page);
+              }
+            }}
+            className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-1 focus:ring-cyan-500"
+          />
+          <span>of {paginationData.totalPages}</span>
+        </div>
+      )}
     </div>
   );
 };

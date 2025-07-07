@@ -81,7 +81,7 @@ const RevenueCard: React.FC = () => {
       {/* Total Revenue Card */}
       <div className="bg-white/40 backdrop-blur-lg rounded-2xl shadow-lg p-8 flex flex-col items-center justify-center mb-8 border border-white/40 hover:bg-white/50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl">
         <div className="text-2xl font-semibold text-blue-700 mb-2 flex items-center gap-2">
-          💰 Total Revenue
+           Total Revenue
         </div>
         <div className="text-4xl font-bold text-blue-900 mb-2">
           ₹ {totalRevenue.toLocaleString('en-IN')}
