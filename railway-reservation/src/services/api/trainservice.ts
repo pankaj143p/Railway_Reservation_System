@@ -15,14 +15,6 @@ export const fetchTrains = async (): Promise<Train[]> =>{
 }  
 
 
-// export const addUser = async (user: Partial<User>): Promise<User> => {
-//   const token = getToken();
-//   const res = await axios.post(`${API_URL}/register`, user, {
-//     headers: { Authorization: `Bearer ${token}` }
-//   });
-//   return res.data;
-// };
-
 export const addTrain = async (train: Partial<Train>): Promise<Train> =>{
     const token = getToken();
     const response = await axios.post(`${API_URL}/trains/add`, train, {
@@ -31,12 +23,23 @@ export const addTrain = async (train: Partial<Train>): Promise<Train> =>{
     return response.data;
 }
 
-export const deleteTrain = async (id: number): Promise<void> => {
+export const deleteTrain = async (id: number): Promise<boolean> => {
     const token = getToken();
-    await axios.delete(`${API_URL}/trains/delete/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
+    if (!token) {
+        throw new Error("No authentication token found");
+    }
+    
+    try {
+        const response = await axios.put(`${API_URL}/trains/toggle-active/${id}`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data; 
+    } catch (error) {
+        console.error("Error toggling train status:", error);
+        throw error;
+    }
 };
+
 
 export const updateTrain = async(id: number, train: Partial<Train>): Promise<Train> =>{
     const token = getToken();

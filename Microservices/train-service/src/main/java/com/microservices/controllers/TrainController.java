@@ -160,11 +160,16 @@ public class TrainController {
         }
     }
 
-    @PatchMapping("/isActive/{id}")
-    public boolean isActive(@PathVariable Long id) throws TrainException {
-        return trainService.isActive(id);
+    @PutMapping("/toggle-active/{id}")
+    public ResponseEntity<Boolean> toggleActiveStatus(@PathVariable Long id) {
+    try {
+        boolean isActive = trainService.toggleActiveStatus(id);
+        return ResponseEntity.ok(isActive);
+    } catch (TrainException e) {
+        logger.error("Error toggling active status for train {}: {}", id, e.getMessage());
+        return ResponseEntity.notFound().build();
     }
-
+}
     // Add this to your TrainController class
 
     @GetMapping("/getAllInActiveDates/{id}")

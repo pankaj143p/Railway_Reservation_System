@@ -109,7 +109,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             var response = exchange.getResponse();
 
             // Allow all OPTIONS requests to pass through for CORS preflight
-            if (request.getMethod() != null && request.getMethod().name().equalsIgnoreCase("OPTIONS")) {
+            if (request.getMethod() != null && (request.getMethod().name().equalsIgnoreCase("OPTIONS") || request.getMethod().name().equalsIgnoreCase("PATCH"))) {
                 response.setStatusCode(HttpStatus.OK);
                 return response.setComplete();
             }

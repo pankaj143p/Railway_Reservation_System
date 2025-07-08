@@ -23,6 +23,6 @@ public interface TrainService {
     String increaseSeats(Long id, int cnt);
     String getOperationalStatus(Long trainId) throws TrainException;
     List<LocalDate> getALlInActiveDates(Long id) throws TrainException;
-    boolean isActive(Long trainId) throws TrainException;
+    boolean toggleActiveStatus(Long trainId) throws TrainException;
     
 }
