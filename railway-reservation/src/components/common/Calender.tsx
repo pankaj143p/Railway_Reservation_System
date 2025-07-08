@@ -359,7 +359,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
 
           {internalSelectedDate && (
             <SelectedDateInfo>
-              <h4>✅ Selected Date</h4>
+              <h4> Selected Date</h4>
               <p>{selectedDateFormatted}</p>
               <ConfirmButton onClick={() => {
                 setShowSuccessModal(false);
@@ -371,7 +371,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
                 setInternalSelectedDate('');
                 setSelectedDateFormatted('');
               }}>
-                ❌ Clear Selection
+                 Clear Selection
               </ClearButton>
             </SelectedDateInfo>
           )}
@@ -442,9 +442,9 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
           </Legend>
 
           <BookingPolicy>
-            <span>📅 Booking available up to 90 days in advance only</span>
+            <span> Booking available up to 90 days in advance only</span>
             <br />
-            <span>🚫 Train operational status checked when you click a date</span>
+            <span> Train operational status checked when you click a date</span>
             <br />
             <small>Click on any green date to check availability and operational status</small>
           </BookingPolicy>
@@ -457,7 +457,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
       {showSuccessModal && (
         <ModalOverlay>
           <ModalContainer $type="success">
-            <ModalIcon>🎉</ModalIcon>
+            <ModalIcon></ModalIcon>
             <ModalTitle>Date Selected Successfully!</ModalTitle>
             <ModalMessage>
               <strong>Travel Date:</strong> {selectedDateFormatted}
@@ -476,7 +476,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
                   onClose();
                 }}
               >
-                🎫 Proceed to Booking
+                 Proceed to Booking
               </ModalButton>
               <ModalButton 
                 $type="secondary" 
@@ -510,7 +510,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
                   navigate('/login');
                 }}
               >
-                🚀 Go to Login
+                 Go to Login
               </ModalButton>
               <ModalButton 
                 $type="secondary" 
@@ -520,7 +520,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
                   navigate('/register');
                 }}
               >
-                📝 Create Account
+                 Create Account
               </ModalButton>
               <ModalButton 
                 $type="tertiary" 
@@ -537,7 +537,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
       {showErrorModal && (
         <ModalOverlay>
           <ModalContainer $type="error">
-            <ModalIcon>❌</ModalIcon>
+            <ModalIcon></ModalIcon>
             <ModalTitle>Booking Not Available</ModalTitle>
             <ModalMessage>
               {modalMessage.split('\n').map((line, index) => (
