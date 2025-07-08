@@ -262,4 +262,23 @@ public class TrainServiceImplementation implements TrainService {
         logger.warn("Train not found: {}", id);
         throw new TrainException("Train not found with id : "+id);
     }
+
+    @Override
+    public boolean isActive(Long id) throws TrainException {
+        Optional<TrainDetails> otp = trainRepository.findById(id);
+        if(otp.isPresent()){
+            logger.info("Fetched operational status for train id: {}", id);
+            TrainDetails train = otp.get();
+            if(train.getIsActive()){
+                train.setIsActive(false);
+            }else{
+                train.setIsActive(true);
+            }
+            trainRepository.save(train);
+            return train.getIsActive();
+        }
+        logger.warn("Train not found: {}", id);
+        throw new TrainException("Train not found with id : "+id);
+
+    }
 }

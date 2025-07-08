@@ -13,10 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -109,7 +106,8 @@ public class TrainController {
 
     // Get trains by date
     @GetMapping("/byDate")
-    public ResponseEntity<List<TrainDetails>> getByDate(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    public ResponseEntity<List<TrainDetails>> getByDate(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<TrainDetails> trains = trainService.getTrainsByDate(date);
         logger.info("Fetched trains by date: {}", date);
         return ResponseEntity.ok(trains);
@@ -117,7 +115,8 @@ public class TrainController {
 
     // Get trains by route
     @GetMapping("/route")
-    public ResponseEntity<List<TrainDetails>> getByRoute(@RequestParam String source, @RequestParam String destination) {
+    public ResponseEntity<List<TrainDetails>> getByRoute(@RequestParam String source,
+            @RequestParam String destination) {
         List<TrainDetails> trains = trainService.getTrainsBySourceAndDestination(source, destination);
         logger.info("Fetched trains from {} to {}, count: {}", source, destination, trains.size());
         return ResponseEntity.ok(trains);
@@ -149,15 +148,33 @@ public class TrainController {
         }
     }
 
-  @GetMapping("/operational-status/{id}")
+    @GetMapping("/operational-status/{id}")
     public String getOperationalStatus(@PathVariable Long id) {
-          try {
+        try {
             String opr = trainService.getOperationalStatus(id);
             logger.info("Fetched train by id: {}", id);
             return opr;
         } catch (TrainException e) {
             logger.error("Train not found: {}", id);
             return "Train not found";
+        }
+    }
+
+    @PatchMapping("/isActive/{id}")
+    public boolean isActive(@PathVariable Long id) throws TrainException {
+        return trainService.isActive(id);
+    }
+
+    // Add this to your TrainController class
+
+    @GetMapping("/getAllInActiveDates/{id}")
+    public ResponseEntity<List<LocalDate>> getInactiveDates(@PathVariable Long id) {
+        try {
+            List<LocalDate> inactiveDates = trainService.getALlInActiveDates(id);
+            return ResponseEntity.ok(inactiveDates);
+        } catch (TrainException e) {
+            logger.error("Error fetching inactive dates for train {}: {}", id, e.getMessage());
+            return ResponseEntity.notFound().build();
         }
     }
 
