@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Train } from "../../../interfaces/Train";
 import { fetchTrains, addTrain, updateTrain, deleteTrain } from "../../../services/api/trainservice";
 import TrainForm from "../../../components/ui/trainform/trainfrom";
 import RoutesModal from "../../../components/ui/trainform/trainroutes";
 import InactiveDatesModal from "../../../components/ui/trainform/trainInActiveDatesModel";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import Alert from '@mui/material/Alert';
 
 const TrainsPage: React.FC = () => {
@@ -16,6 +16,10 @@ const TrainsPage: React.FC = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [trainToDelete, setTrainToDelete] = useState<Train | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
 
   // For routes modal
   const [routesModalOpen, setRoutesModalOpen] = useState(false);
@@ -25,9 +29,38 @@ const TrainsPage: React.FC = () => {
   const [inactiveDatesModalOpen, setInactiveDatesModalOpen] = useState(false);
   const [inactiveDatesTrain, setInactiveDatesTrain] = useState<Train | null>(null);
 
+  // Alert state
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
   useEffect(() => {
     loadTrains();
   }, []);
+
+  // Reset to first page when showInactive changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [showInactive]);
+
+  // Calculate filtered trains and pagination
+  const { filteredTrains, totalPages, paginatedTrains } = useMemo(() => {
+    const trainsArray = Array.isArray(trains) ? trains : [];
+    const filtered = trainsArray.filter(train => showInactive || train.isActive !== false);
+    const total = Math.ceil(filtered.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginated = filtered.slice(startIndex, endIndex);
+
+    return {
+      filteredTrains: filtered,
+      totalPages: total,
+      paginatedTrains: paginated
+    };
+  }, [trains, showInactive, currentPage, itemsPerPage]);
+
+  const showAlert = (type: 'success' | 'error', message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 5000);
+  };
 
   const loadTrains = async () => {
     setLoading(true);
@@ -45,7 +78,7 @@ const TrainsPage: React.FC = () => {
     } catch (error) {
       console.error("Error fetching trains:", error);
       setTrains([]);
-      <Alert variant="outlined" severity="error">Failed to fetch trains. Please refresh the page.</Alert>;
+      showAlert('error', 'Failed to fetch trains. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -60,11 +93,12 @@ const TrainsPage: React.FC = () => {
       
       // Refresh the trains list to get the latest data
       await loadTrains();
-
-      <Alert variant="outlined" severity="success">Train added successfully!</Alert>
+      setFormOpen(false);
+      setEditingTrain(null);
+      showAlert('success', 'Train added successfully!');
     } catch (err) {
       console.error("Add train error:", err);
-      <Alert variant="outlined" severity="error">Failed to add train. Please check the console for details.</Alert>
+      showAlert('error', 'Failed to add train. Please check the console for details.');
     } finally {
       setLoading(false);
     }
@@ -87,10 +121,11 @@ const TrainsPage: React.FC = () => {
       await loadTrains();
       
       setEditingTrain(null);
-      <Alert variant="outlined" severity="success">Train updated successfully!</Alert>
+      setFormOpen(false);
+      showAlert('success', 'Train updated successfully!');
     } catch (err) {
       console.error("Update train error:", err);
-      <Alert variant="outlined" severity="error">Failed to update train. Please check the console for details.</Alert>
+      showAlert('error', 'Failed to update train. Please check the console for details.');
     } finally {
       setLoading(false);
     }
@@ -104,7 +139,6 @@ const TrainsPage: React.FC = () => {
         setDeleteConfirmOpen(true);
       }
     }
-    
   };
 
   const confirmDelete = async () => {
@@ -113,7 +147,6 @@ const TrainsPage: React.FC = () => {
     setLoading(true);
     try {
       console.log("Deactivating train:", trainToDelete.trainId);
-      // await updateTrain(trainToDelete.trainId, { isActive: false });
       await deleteTrain(trainToDelete.trainId);
       
       // Refresh the trains list
@@ -121,10 +154,10 @@ const TrainsPage: React.FC = () => {
       
       setDeleteConfirmOpen(false);
       setTrainToDelete(null);
-      <Alert variant="outlined" severity="success">Train deactivated successfully!</Alert>
+      showAlert('success', 'Train deactivated successfully!');
     } catch (err) {
       console.error("Soft delete train error:", err);
-      <Alert variant="outlined" severity="error">Failed to deactivate train. Please check the console for details.</Alert>
+      showAlert('error', 'Failed to deactivate train. Please check the console for details.');
     } finally {
       setLoading(false);
     }
@@ -143,17 +176,109 @@ const TrainsPage: React.FC = () => {
       
       // Refresh the trains list
       await loadTrains();
-
-      <Alert variant="outlined" severity="success">Train reactivated successfully!</Alert>
+      showAlert('success', 'Train reactivated successfully!');
     } catch (err) {
       console.error("Reactivate train error:", err);
-      <Alert variant="outlined" severity="error">Failed to reactivate train. Please check the console for details.</Alert>
+      showAlert('error', 'Failed to reactivate train. Please check the console for details.');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Previous button
+    buttons.push(
+      <button
+        key="prev"
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-3 py-2 mx-1 rounded-lg bg-white/30 backdrop-blur-lg border border-white/40 text-blue-900 hover:bg-blue-100/50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        <FontAwesomeIcon icon={faChevronLeft} />
+      </button>
+    );
+
+    // First page button
+    if (startPage > 1) {
+      buttons.push(
+        <button
+          key={1}
+          onClick={() => handlePageChange(1)}
+          className="px-4 py-2 mx-1 rounded-lg bg-white/30 backdrop-blur-lg border border-white/40 text-blue-900 hover:bg-blue-100/50 transition"
+        >
+          1
+        </button>
+      );
+      if (startPage > 2) {
+        buttons.push(<span key="ellipsis1" className="px-2 text-blue-900">...</span>);
+      }
+    }
+
+    // Page number buttons
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-4 py-2 mx-1 rounded-lg backdrop-blur-lg border transition ${
+            currentPage === i
+              ? 'bg-blue-600 border-blue-600 text-white'
+              : 'bg-white/30 border-white/40 text-blue-900 hover:bg-blue-100/50'
+          }`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    // Last page button
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        buttons.push(<span key="ellipsis2" className="px-2 text-blue-900">...</span>);
+      }
+      buttons.push(
+        <button
+          key={totalPages}
+          onClick={() => handlePageChange(totalPages)}
+          className="px-4 py-2 mx-1 rounded-lg bg-white/30 backdrop-blur-lg border border-white/40 text-blue-900 hover:bg-blue-100/50 transition"
+        >
+          {totalPages}
+        </button>
+      );
+    }
+
+    // Next button
+    buttons.push(
+      <button
+        key="next"
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-3 py-2 mx-1 rounded-lg bg-white/30 backdrop-blur-lg border border-white/40 text-blue-900 hover:bg-blue-100/50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        <FontAwesomeIcon icon={faChevronRight} />
+      </button>
+    );
+
+    return buttons;
+  };
+
+  if (loading && trains.length === 0) {
     return (
       <div className="p-4 sm:p-8 min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex items-center justify-center">
         <div className="text-blue-900 text-lg">Loading trains...</div>
@@ -163,8 +288,27 @@ const TrainsPage: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-8 min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200">
+      {/* Alert Component */}
+      {alert && (
+        <div className="fixed top-4 right-4 z-50 w-96">
+          <Alert 
+            variant="outlined" 
+            severity={alert.type}
+            onClose={() => setAlert(null)}
+          >
+            {alert.message}
+          </Alert>
+        </div>
+      )}
+
       <div className="my-16 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-        <h2 className="text-2xl font-bold text-blue-900">Train Management</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-blue-900">Train Management</h2>
+          <p className="text-blue-700 text-sm mt-1">
+            Showing {paginatedTrains.length} of {filteredTrains.length} trains 
+            {filteredTrains.length > itemsPerPage && ` (Page ${currentPage} of ${totalPages})`}
+          </p>
+        </div>
         <div className="flex gap-4 items-center">
           <label className="flex items-center gap-2 text-blue-900 text-sm">
             <input
@@ -184,6 +328,7 @@ const TrainsPage: React.FC = () => {
           </button>
         </div>
       </div>
+
       <div className="w-full max-w-7xl mx-auto">
         <div className="hidden md:grid grid-cols-14 gap-4 px-6 py-3 mb-2 rounded-xl bg-blue-50/60 font-semibold text-blue-900 text-xs">
           <div>Train ID</div>
@@ -201,13 +346,9 @@ const TrainsPage: React.FC = () => {
           <div>Inactive Dates</div>
           <div>Actions</div>
         </div>
+
         <div className="flex flex-col gap-4">
-          {(() => {
-            console.log("Current trains state:", trains, "Type:", typeof trains, "Is Array:", Array.isArray(trains));
-            const trainsArray = Array.isArray(trains) ? trains : [];
-            return trainsArray
-              .filter(train => showInactive || train.isActive !== false)
-              .map((t, idx) => (
+          {paginatedTrains.map((t, idx) => (
             <div
               key={t.trainId ?? idx}
               className={`grid grid-cols-2 md:grid-cols-14 gap-4 items-center px-4 md:px-6 py-4 rounded-xl backdrop-blur-lg border border-white/40 shadow transition hover:scale-[1.01] text-xs md:text-sm ${
@@ -278,7 +419,7 @@ const TrainsPage: React.FC = () => {
                     title="Deactivate Train"
                     disabled={loading}
                   >
-                 <FontAwesomeIcon  icon={faTrash} style={{color: "#c92222",}} />
+                    <FontAwesomeIcon icon={faTrash} style={{color: "#c92222"}} />
                   </button>
                 ) : (
                   <button
@@ -295,15 +436,28 @@ const TrainsPage: React.FC = () => {
                 )}
               </div>
             </div>
-          ));
-          })()}
-          {(Array.isArray(trains) ? trains : []).filter(train => showInactive || train.isActive !== false).length === 0 && (
+          ))}
+
+          {paginatedTrains.length === 0 && (
             <div className="text-center text-gray-400 py-8">
               {!Array.isArray(trains) || trains.length === 0 ? "No trains found." : "No active trains found. Check 'Show Inactive Trains' to see all trains."}
             </div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center mt-8 gap-2">
+            <div className="flex items-center">
+              {renderPaginationButtons()}
+            </div>
+            <div className="ml-4 text-sm text-blue-700">
+              Page {currentPage} of {totalPages}
+            </div>
+          </div>
+        )}
       </div>
+
       <TrainForm
         open={formOpen}
         onClose={() => { setFormOpen(false); setEditingTrain(null); }}
