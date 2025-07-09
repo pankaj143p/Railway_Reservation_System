@@ -154,7 +154,6 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
               status: availableSeats <= 0 ? 'full' : 'available'
             };
           } catch (error) {
-            const dayOfMonth = day;
             let demoStatus = 'available';
             
             // if (dayOfMonth === 25 || dayOfMonth === 28) {

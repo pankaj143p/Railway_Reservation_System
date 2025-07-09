@@ -6,6 +6,8 @@ import RoutesModal from "../../../components/ui/trainform/trainroutes";
 import InactiveDatesModal from "../../../components/ui/trainform/trainInActiveDatesModel";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import Alert from '@mui/material/Alert';
+
 const TrainsPage: React.FC = () => {
   const [trains, setTrains] = useState<Train[]>([]);
   const [formOpen, setFormOpen] = useState(false);
@@ -43,7 +45,7 @@ const TrainsPage: React.FC = () => {
     } catch (error) {
       console.error("Error fetching trains:", error);
       setTrains([]);
-      alert("Failed to fetch trains. Please refresh the page.");
+      <Alert variant="outlined" severity="error">Failed to fetch trains. Please refresh the page.</Alert>;
     } finally {
       setLoading(false);
     }
@@ -58,11 +60,11 @@ const TrainsPage: React.FC = () => {
       
       // Refresh the trains list to get the latest data
       await loadTrains();
-      
-      alert("Train added successfully!");
+
+      <Alert variant="outlined" severity="success">Train added successfully!</Alert>
     } catch (err) {
       console.error("Add train error:", err);
-      alert("Failed to add train. Please check the console for details.");
+      <Alert variant="outlined" severity="error">Failed to add train. Please check the console for details.</Alert>
     } finally {
       setLoading(false);
     }
@@ -85,10 +87,10 @@ const TrainsPage: React.FC = () => {
       await loadTrains();
       
       setEditingTrain(null);
-      alert("Train updated successfully!");
+      <Alert variant="outlined" severity="success">Train updated successfully!</Alert>
     } catch (err) {
       console.error("Update train error:", err);
-      alert("Failed to update train. Please check the console for details.");
+      <Alert variant="outlined" severity="error">Failed to update train. Please check the console for details.</Alert>
     } finally {
       setLoading(false);
     }
@@ -119,10 +121,10 @@ const TrainsPage: React.FC = () => {
       
       setDeleteConfirmOpen(false);
       setTrainToDelete(null);
-      alert("Train deactivated successfully!");
+      <Alert variant="outlined" severity="success">Train deactivated successfully!</Alert>
     } catch (err) {
       console.error("Soft delete train error:", err);
-      alert("Failed to deactivate train. Please check the console for details.");
+      <Alert variant="outlined" severity="error">Failed to deactivate train. Please check the console for details.</Alert>
     } finally {
       setLoading(false);
     }
@@ -141,11 +143,11 @@ const TrainsPage: React.FC = () => {
       
       // Refresh the trains list
       await loadTrains();
-      
-      alert("Train reactivated successfully!");
+
+      <Alert variant="outlined" severity="success">Train reactivated successfully!</Alert>
     } catch (err) {
       console.error("Reactivate train error:", err);
-      alert("Failed to reactivate train. Please check the console for details.");
+      <Alert variant="outlined" severity="error">Failed to reactivate train. Please check the console for details.</Alert>
     } finally {
       setLoading(false);
     }
