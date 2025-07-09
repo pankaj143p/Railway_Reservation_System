@@ -23,6 +23,7 @@ export const addTrain = async (train: Partial<Train>): Promise<Train> =>{
     return response.data;
 }
 
+
 export const deleteTrain = async (id: number): Promise<boolean> => {
     const token = getToken();
     if (!token) {

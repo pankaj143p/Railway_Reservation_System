@@ -1,15 +1,14 @@
 import { Train, TrainSchedule, TrainSearchParams } from '../interfaces/Train';
+import axios from 'axios';
 
+const getToken = () => {
+  return localStorage.getItem("token");
+}
 // Microservices endpoints
 const TRAIN_SERVICE_URL = import.meta.env.VITE_API_GATEWAY_URL;
 
 export const fetchTrainList = async () => {
   try {
-    // const token = localStorage.getItem("token");
-    // if (!token) {
-    //   throw new Error("No authentication token found.");
-    // }
-
     const response = await fetch(`${TRAIN_SERVICE_URL}/trains/all`, {
       method: "GET",
       headers: {
@@ -32,6 +31,19 @@ export const fetchTrainList = async () => {
     return null;
   }
 };
+
+
+
+export const fetchInActiveDates = async (id: number) => {
+    const token = getToken();
+    if(!token) alert('UnAuthenticated')
+    const response = await axios.get(`${TRAIN_SERVICE_URL}/trains/getAllInActiveDates/${id}`, {
+      headers: {
+			Authorization: `Bearer ${token}`
+		}
+    });
+    return response.data;
+}
 
 // Fetch trains for public listing (only available trains within 90 days)
 export const fetchAvailableTrains = async () => {

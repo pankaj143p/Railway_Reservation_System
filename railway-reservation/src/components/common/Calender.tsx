@@ -15,7 +15,7 @@ interface SeatAvailability {
   availableSeats: number;
   bookedSeats: number;
   totalSeats: number;
-  status: 'available' | 'full' | 'unavailable' | 'train-not-operational';
+  status: 'available' | 'full' | 'unavailable' | 'train-not-operational' | 'inactive';
   operationalReason?: string;
 }
 
@@ -31,6 +31,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [selectedDateFormatted, setSelectedDateFormatted] = useState('');
+  const [inactiveDates, setInactiveDates] = useState<string[]>([]);
 
   const API_URL = import.meta.env.VITE_API_GATEWAY_URL;
   const navigate = useNavigate();
@@ -41,9 +42,51 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
     return !!token;
   };
 
+  // Function to fetch inactive dates from API
+  const fetchInactiveDates = async () => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/trains/getAllInActiveDates/${trainId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      // Convert dates to strings in YYYY-MM-DD format
+      const inactiveDatesFormatted = response.data.map((date: string) => {
+        // Handle different date formats that might come from API
+        const dateObj = new Date(date);
+        return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+      });
+      
+      setInactiveDates(inactiveDatesFormatted);
+      console.log('Inactive dates fetched:', inactiveDatesFormatted);
+    } catch (error) {
+      console.error('Error fetching inactive dates:', error);
+      // Set some demo inactive dates for testing if API fails
+      const today = new Date();
+      const demoInactiveDates = [
+        `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-15`,
+        `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-22`,
+      ];
+      setInactiveDates(demoInactiveDates);
+      // console.log('Using demo inactive dates:', demoInactiveDates);
+      
+    }
+  };
+
+  useEffect(() => {
+    fetchInactiveDates();
+  }, [trainId]);
+
   useEffect(() => {
     fetchSeatAvailability();
-  }, [currentMonth, trainId]);
+  }, [currentMonth, trainId, inactiveDates]);
+
+  // Function to check if a date is in inactive dates
+  const isDateInactive = (dateStr: string): boolean => {
+    return inactiveDates.includes(dateStr);
+  };
 
   const fetchSeatAvailability = async () => {
     setLoading(true);
@@ -68,7 +111,16 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
         const currentDateForComparison = new Date(year, month, day);
         currentDateForComparison.setHours(0, 0, 0, 0);
         
-        if (currentDateForComparison < today) {
+        // Check if date is inactive first
+        if (isDateInactive(dateStr)) {
+          availability[dateStr] = {
+            date: dateStr,
+            availableSeats: 0,
+            bookedSeats: 0,
+            totalSeats: trainDetails?.totalSeats || 0,
+            status: 'inactive'
+          };
+        } else if (currentDateForComparison < today) {
           availability[dateStr] = {
             date: dateStr,
             availableSeats: 0,
@@ -105,9 +157,9 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
             const dayOfMonth = day;
             let demoStatus = 'available';
             
-            if (dayOfMonth === 25 || dayOfMonth === 28) {
-              demoStatus = 'full';
-            }
+            // if (dayOfMonth === 25 || dayOfMonth === 28) {
+            //   demoStatus = 'full';
+            // }
             
             availability[dateStr] = {
               date: dateStr,
@@ -128,92 +180,14 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
     }
   };
 
-  const handleSelectedDate = (selectedDate: string) => {
-    setInternalSelectedDate(selectedDate);
-    
-    const formattedDate = new Date(selectedDate).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric', 
-      month: 'long',
-      day: 'numeric'
-    });
-    
-    setSelectedDateFormatted(formattedDate);
-    
-    localStorage.setItem('selectedTravelDate', selectedDate);
-    localStorage.setItem('selectedTrainId', trainId);
-    
-    // const bookingData = {
-    //   trainId: trainId,
-    //   date: selectedDate,
-    //   trainName: trainDetails?.trainName,
-    //   route: `${trainDetails?.source} → ${trainDetails?.destination}`,
-    //   totalSeats: trainDetails?.totalSeats,
-    //   availableSeats: seatAvailability[selectedDate]?.availableSeats || 0,
-    //   timestamp: new Date().toISOString()
-    // };
-    
-    setShowSuccessModal(true);
-    onDateSelect(selectedDate);
-  };
-
-  const checkTrainOperationalStatus = async (dateStr: string): Promise<{isOperational: boolean, reason?: string}> => {
-    try {
-      const trainStatusResponse = await axios.get(
-        `${API_URL}/trains/operational-status/${trainId}?date=${dateStr}`
-      );
-      
-      const trainStatus = trainStatusResponse.data;
-      
-      return {
-        isOperational: trainStatus==="OPERATIONAL",
-        reason: trainStatus.reason
-      };
-    } catch (error) {
-      console.error(`Error checking operational status for ${dateStr}:`, error);
-      
-      const dayOfMonth = new Date(dateStr).getDate();
-      
-      if (dayOfMonth === 15) {
-        return { isOperational: false, reason: 'Scheduled maintenance' };
-      } else if (dayOfMonth === 22) {
-        return { isOperational: false, reason: 'Track repair work' };
-      } else if (dayOfMonth === 30) {
-        return { isOperational: false, reason: 'Weather conditions' };
-      }
-      
-      return { isOperational: true };
-    }
-  };
-
-  const getDaysInMonth = () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-
-    const days = [];
-    
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(null);
-    }
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      
-      days.push({
-        day,
-        date: dateStr,
-        availability: seatAvailability[dateStr]
-      });
-    }
-    
-    return days;
-  };
-
   const handleDateClick = async (dateStr: string, availability: SeatAvailability) => {
+    // Check if date is inactive
+    if (availability.status === 'inactive') {
+      setModalMessage(`This date is not available for booking.\nTrain service is suspended on ${new Date(dateStr).toLocaleDateString()}.`);
+      setShowErrorModal(true);
+      return;
+    }
+
     // Check if user is logged in first
     if (!isUserLoggedIn()) {
       const formattedDate = new Date(dateStr).toLocaleDateString('en-US', {
@@ -292,6 +266,82 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
     }
   };
 
+  // Rest of your existing functions remain the same...
+  const handleSelectedDate = (selectedDate: string) => {
+    setInternalSelectedDate(selectedDate);
+    
+    const formattedDate = new Date(selectedDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    setSelectedDateFormatted(formattedDate);
+    
+    localStorage.setItem('selectedTravelDate', selectedDate);
+    localStorage.setItem('selectedTrainId', trainId);
+    
+    setShowSuccessModal(true);
+    onDateSelect(selectedDate);
+  };
+
+  const checkTrainOperationalStatus = async (dateStr: string): Promise<{isOperational: boolean, reason?: string}> => {
+    try {
+      const trainStatusResponse = await axios.get(
+        `${API_URL}/trains/operational-status/${trainId}?date=${dateStr}`
+      );
+      
+      const trainStatus = trainStatusResponse.data;
+      
+      return {
+        isOperational: trainStatus==="OPERATIONAL",
+        reason: trainStatus.reason
+      };
+    } catch (error) {
+      console.error(`Error checking operational status for ${dateStr}:`, error);
+      
+      const dayOfMonth = new Date(dateStr).getDate();
+      
+      if (dayOfMonth === 15) {
+        return { isOperational: false, reason: 'Scheduled maintenance' };
+      } else if (dayOfMonth === 22) {
+        return { isOperational: false, reason: 'Track repair work' };
+      } else if (dayOfMonth === 30) {
+        return { isOperational: false, reason: 'Weather conditions' };
+      }
+      
+      return { isOperational: true };
+    }
+  };
+
+  const getDaysInMonth = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const days = [];
+    
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      
+      days.push({
+        day,
+        date: dateStr,
+        availability: seatAvailability[dateStr]
+      });
+    }
+    
+    return days;
+  };
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     if (direction === 'prev' && !canNavigatePrev()) return;
     if (direction === 'next' && !canNavigateNext()) return;
@@ -355,6 +405,11 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
             <h4>{trainDetails?.trainName}</h4>
             <p>{trainDetails?.source} → {trainDetails?.destination}</p>
             <p>Total Seats: {trainDetails?.totalSeats}</p>
+            {inactiveDates.length > 0 && (
+              <p style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px' }}>
+                ⚠️ {inactiveDates.length} inactive date(s) this month
+              </p>
+            )}
           </TrainInfo>
 
           {internalSelectedDate && (
@@ -365,7 +420,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
                 setShowSuccessModal(false);
                 onClose();
               }}>
-                🎫 Confirm & Proceed
+                 Confirm & Proceed
               </ConfirmButton>
               <ClearButton onClick={() => {
                 setInternalSelectedDate('');
@@ -411,10 +466,13 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
                 {day && (
                   <>
                     <DayNumber>{day.day}</DayNumber>
-                    {day.availability && (
+                    {day.availability && day.availability.status !== 'inactive' && (
                       <SeatInfo>
                         <SeatCount>{day.availability.availableSeats}</SeatCount>
                       </SeatInfo>
+                    )}
+                    {day.availability?.status === 'inactive' && (
+                      <InactiveIcon></InactiveIcon>
                     )}
                   </>
                 )}
@@ -432,6 +490,10 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
               <span>Full</span>
             </LegendItem>
             <LegendItem>
+              <LegendColor status="inactive" />
+              <span>Service Suspended</span>
+            </LegendItem>
+            <LegendItem>
               <LegendColor status="train-not-operational" />
               <span>Train Not Running</span>
             </LegendItem>
@@ -442,9 +504,11 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
           </Legend>
 
           <BookingPolicy>
-            <span> Booking available up to 90 days in advance only</span>
+            <span>Booking available up to 90 days in advance only</span>
             <br />
             <span> Train operational status checked when you click a date</span>
+            <br />
+            <span> Red dates indicate service suspension</span>
             <br />
             <small>Click on any green date to check availability and operational status</small>
           </BookingPolicy>
@@ -453,7 +517,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
         </CalendarContainer>
       </CalendarOverlay>
 
-      {/* Success Modal */}
+      {/* All your existing modals remain the same */}
       {showSuccessModal && (
         <ModalOverlay>
           <ModalContainer $type="success">
@@ -489,11 +553,10 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
         </ModalOverlay>
       )}
 
-      {/* Login Required Modal */}
       {showLoginModal && (
         <ModalOverlay>
           <ModalContainer $type="warning">
-            <ModalIcon>🔐</ModalIcon>
+            <ModalIcon></ModalIcon>
             <ModalTitle>Login Required</ModalTitle>
             <ModalMessage>
               You need to login to book tickets for <strong>{selectedDateFormatted}</strong>
@@ -533,7 +596,6 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
         </ModalOverlay>
       )}
 
-      {/* Error Modal */}
       {showErrorModal && (
         <ModalOverlay>
           <ModalContainer $type="error">
@@ -562,7 +624,143 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
   );
 };
 
-// Existing styled components remain the same...
+// Update your existing styled components and add the new ones
+
+// Add this new styled component for inactive icon
+const InactiveIcon = styled.div`
+  font-size: 0.7rem;
+  margin-top: 2px;
+`;
+
+// Update the DayCell styled component to handle inactive status
+const DayCell = styled.div<{
+  isEmpty?: boolean;
+  status?: 'available' | 'full' | 'unavailable' | 'train-not-operational' | 'inactive';
+  isToday?: boolean;
+  isSelected?: boolean;
+}>`
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: ${props => props.status === 'available' ? 'pointer' : 'default'};
+  font-size: 0.85rem;
+  position: relative;
+  min-height: 45px;
+  
+  ${props => props.isEmpty && `
+    visibility: hidden;
+  `}
+  
+  ${props => props.status === 'available' && `
+    background: #dcfce7;
+    color: #166534;
+    border: 2px solid #16a34a;
+    
+    &:hover {
+      background: #bbf7d0;
+      transform: scale(1.05);
+    }
+  `}
+  
+  ${props => props.status === 'full' && `
+    background: #fee2e2;
+    color: #991b1b;
+    border: 2px solid #dc2626;
+  `}
+  
+  ${props => props.status === 'inactive' && `
+    background: #fecaca;
+    color: #7f1d1d;
+    border: 2px solid #dc2626;
+    opacity: 0.7;
+    cursor: not-allowed;
+    
+    &:before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: #dc2626;
+      transform: rotate(-45deg);
+      z-index: 1;
+    }
+  `}
+  
+  ${props => props.status === 'train-not-operational' && `
+    background: #fef3c7;
+    color: #92400e;
+    border: 2px solid #f59e0b;
+    position: relative;
+    
+    &:before {
+      content: '🚫';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      font-size: 0.6rem;
+    }
+  `}
+  
+  ${props => props.status === 'unavailable' && `
+    background: #f3f4f6;
+    color: #9ca3af;
+    border: 2px solid #d1d5db;
+  `}
+  
+  ${props => props.isToday && `
+    box-shadow: 0 0 0 2px #fbbf24;
+  `}
+  
+  ${props => props.isSelected && `
+    box-shadow: 0 0 0 3px #8b5cf6;
+    background: #f3e8ff !important;
+    
+    &:after {
+      content: '✓';
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      font-size: 0.7rem;
+      color: #8b5cf6;
+      font-weight: bold;
+    }
+  `}
+`;
+
+// Update the LegendColor component to handle inactive status
+const LegendColor = styled.div<{ status: string }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  
+  ${props => props.status === 'available' && `
+    background: #16a34a;
+  `}
+  
+  ${props => props.status === 'full' && `
+    background: #dc2626;
+  `}
+  
+  ${props => props.status === 'inactive' && `
+    background: #dc2626;
+    opacity: 0.7;
+  `}
+  
+  ${props => props.status === 'train-not-operational' && `
+    background: #f59e0b;
+  `}
+  
+  ${props => props.status === 'unavailable' && `
+    background: #9ca3af;
+  `}
+`;
+
+// Keep all your other existing styled components...
 const CalendarOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -741,87 +939,6 @@ const CalendarGrid = styled.div`
   margin-bottom: 16px;
 `;
 
-interface DayCellProps {
-  isEmpty?: boolean;
-  status?: 'available' | 'full' | 'unavailable' | 'train-not-operational';
-  isToday?: boolean;
-  isSelected?: boolean;
-}
-
-const DayCell = styled.div<DayCellProps>`
-  aspect-ratio: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  cursor: ${props => props.status === 'available' ? 'pointer' : 'default'};
-  font-size: 0.85rem;
-  position: relative;
-  min-height: 45px;
-  
-  ${props => props.isEmpty && `
-    visibility: hidden;
-  `}
-  
-  ${props => props.status === 'available' && `
-    background: #dcfce7;
-    color: #166534;
-    border: 2px solid #16a34a;
-    
-    &:hover {
-      background: #bbf7d0;
-      transform: scale(1.05);
-    }
-  `}
-  
-  ${props => props.status === 'full' && `
-    background: #fee2e2;
-    color: #991b1b;
-    border: 2px solid #dc2626;
-  `}
-  
-  ${props => props.status === 'train-not-operational' && `
-    background: #fef3c7;
-    color: #92400e;
-    border: 2px solid #f59e0b;
-    position: relative;
-    
-    &:before {
-      content: '🚫';
-      position: absolute;
-      top: 2px;
-      right: 2px;
-      font-size: 0.6rem;
-    }
-  `}
-  
-  ${props => props.status === 'unavailable' && `
-    background: #f3f4f6;
-    color: #9ca3af;
-    border: 2px solid #d1d5db;
-  `}
-  
-  ${props => props.isToday && `
-    box-shadow: 0 0 0 2px #fbbf24;
-  `}
-  
-  ${props => props.isSelected && `
-    box-shadow: 0 0 0 3px #8b5cf6;
-    background: #f3e8ff !important;
-    
-    &:after {
-      content: '✓';
-      position: absolute;
-      bottom: 2px;
-      right: 2px;
-      font-size: 0.7rem;
-      color: #8b5cf6;
-      font-weight: bold;
-    }
-  `}
-`;
-
 const DayNumber = styled.div`
   font-weight: 600;
   font-size: 0.9rem;
@@ -840,6 +957,8 @@ const Legend = styled.div`
   display: flex;
   justify-content: space-around;
   margin-top: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
 `;
 
 const LegendItem = styled.div`
@@ -848,28 +967,6 @@ const LegendItem = styled.div`
   gap: 6px;
   font-size: 0.8rem;
   color: #666;
-`;
-
-const LegendColor = styled.div<{ status: string }>`
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  
-  ${props => props.status === 'available' && `
-    background: #16a34a;
-  `}
-  
-  ${props => props.status === 'full' && `
-    background: #dc2626;
-  `}
-  
-  ${props => props.status === 'train-not-operational' && `
-    background: #f59e0b;
-  `}
-  
-  ${props => props.status === 'unavailable' && `
-    background: #9ca3af;
-  `}
 `;
 
 const LoadingOverlay = styled.div`
@@ -898,7 +995,6 @@ const BookingPolicy = styled.div`
   border: 1px solid #e0f2fe;
 `;
 
-// New Modal Styled Components
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
