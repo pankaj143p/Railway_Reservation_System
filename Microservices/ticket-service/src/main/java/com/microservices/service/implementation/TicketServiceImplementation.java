@@ -95,6 +95,8 @@ public class TicketServiceImplementation implements TicketService {
         response.setTrainDetails(train);
 
         try {
+            // 7. Send Kafka event
+            logger.info("Sending Kafka event for ticket booking: {}", ticket.getTicketNumber());
             TicketBookedEvent event = new TicketBookedEvent();
             event.setEmail(ticket.getEmail());
             event.setTicketNumber(ticket.getTicketNumber());
@@ -106,15 +108,16 @@ public class TicketServiceImplementation implements TicketService {
             event.setAge(ticket.getAge());
             event.setNoOfSeats(ticket.getNoOfSeats());
             event.setOrderId(ticket.getOrderId());
-
+    
             kafkaProducerService.sendTicketBookedEvent(event);
         } catch (Exception e) {
             logger.error("Kafka send failed: {}", e.getMessage());
         }
         logger.info("Ticket booked successfully for orderId: {}", orderId);
         return response;
-    }
+    } 
 
+    
     @Override
     public TicketBooking updateTicket(Long id, @Valid TicketBooking updatedTicket) {
         TicketBooking existing = ticketRepository.findById(id)
