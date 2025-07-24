@@ -30,7 +30,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class TicketServiceImplementation implements TicketService {
     private static final Logger logger = LoggerFactory.getLogger(TicketServiceImplementation.class);
-
     private final TicketRepository ticketRepository;
     private final TrainClient trainClient;
     private final Methods methods;
@@ -118,6 +117,8 @@ public class TicketServiceImplementation implements TicketService {
     } 
 
     
+    // 8. Update ticket details
+    // This method allows updating ticket details like full name, age, etc.
     @Override
     public TicketBooking updateTicket(Long id, @Valid TicketBooking updatedTicket) {
         TicketBooking existing = ticketRepository.findById(id)
@@ -286,7 +287,9 @@ public class TicketServiceImplementation implements TicketService {
         logger.info("Fetching all tickets");
         return ticketRepository.findAll();
     }
-
+    
+    // 9. Get ticket by order ID
+    // This method retrieves a ticket based on the order ID, which is unique for each booking
     @Override
     public TicketBooking getTicketByOrderId(String orderId) {
         Optional<TicketBooking> otp = ticketRepository.findByOrderId(orderId);
@@ -297,7 +300,8 @@ public class TicketServiceImplementation implements TicketService {
         logger.warn("Ticket not found for orderId: {}", orderId);
         throw new TicketException("Ticket with order id "+orderId+" not present!");
     }
-
+    // 10. Get tickets by user email
+    // This method retrieves all tickets booked by a user based on their email address
     @Override
     public List<TicketBooking> getTicketByUserEmail(String userEmail) {
         List<TicketBooking> tickets = ticketRepository.findByUserEmail(userEmail);
@@ -308,7 +312,8 @@ public class TicketServiceImplementation implements TicketService {
         logger.info("Fetched tickets for user email: {}", userEmail);
         return tickets;
     }
-
+    // 11. Get booked seats count by train and date
+    // This method retrieves the count of booked seats for a specific train on a given date
     @Override
     public int getBookedSeatsCountByTrainAndDate(Long trainId, LocalDate date) {
         logger.info("Fetching booked seats count for train {} on date {}", trainId, date);
