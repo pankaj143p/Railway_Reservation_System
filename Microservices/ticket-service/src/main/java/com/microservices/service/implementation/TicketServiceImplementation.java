@@ -95,7 +95,9 @@ public class TicketServiceImplementation implements TicketService {
         response.setTicket_number(ticket.getTicketNumber());
         response.setBooking_date(ticket.getBookingDate());
         response.setTrainDetails(train);
+         
 
+        // temprary commented out kafka producer service because of deployment cost
         // try {
         // // 7. Send Kafka event
         // logger.info("Sending Kafka event for ticket booking: {}",
@@ -116,6 +118,8 @@ public class TicketServiceImplementation implements TicketService {
         // } catch (Exception e) {
         // logger.error("Kafka send failed: {}", e.getMessage());
         // }
+
+        // send confirmation email using java smtp 
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(ticket.getEmail());
