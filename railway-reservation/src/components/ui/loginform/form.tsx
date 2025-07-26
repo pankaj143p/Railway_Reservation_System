@@ -5,6 +5,7 @@ import { loginUser } from '../../../services/authService';
 import { jwtDecode } from 'jwt-decode';
 import { Alert } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { Link } from 'react-router-dom';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -51,6 +52,7 @@ const LoginForm = () => {
       <div className="container">
         <div className="left">
           <form className="form" onSubmit={handleLogin}>
+            
             {success && (
               <Alert
                 iconMapping={{
@@ -80,7 +82,12 @@ const LoginForm = () => {
               <span className="forgot">
                 <p className='text-blue-900'>Don't have an account?</p>
                 <a href="/signup">Sign up</a>
-
+              </span>
+                 {/* Add Forgot Password link here */}
+              <span className="forgot">
+                <Link to="/forgot-password" className="forgot-link">
+                  Forgot Password?
+                </Link>
               </span>
               <button type="submit">Submit</button>
             </div>
