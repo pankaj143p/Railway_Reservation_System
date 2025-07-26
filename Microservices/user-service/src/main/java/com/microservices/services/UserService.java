@@ -19,4 +19,5 @@ public interface UserService {
 
     void initiatePasswordReset(String email, String appUrl) throws UserException;
     void resetPassword(String token, String newPassword) throws UserException;
+    boolean isResetTokenValid(String token);
 }

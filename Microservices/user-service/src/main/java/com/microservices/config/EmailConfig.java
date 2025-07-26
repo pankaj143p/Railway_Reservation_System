@@ -1,14 +1,14 @@
-package com.microservices.config;
+// package com.microservices.config;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+// import org.springframework.context.annotation.Bean;
+// import org.springframework.context.annotation.Configuration;
+// import org.springframework.mail.javamail.JavaMailSender;
+// import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-@Configuration
-public class EmailConfig {
-    @Bean
-    public JavaMailSender javaMailSender() {
-        return new JavaMailSenderImpl();
-    }
-}
+// @Configuration
+// public class EmailConfig {
+//     @Bean
+//     public JavaMailSender javaMailSender() {
+//         return new JavaMailSenderImpl();
+//     }
+// }

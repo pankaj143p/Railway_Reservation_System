@@ -169,4 +169,11 @@ public AuthResponse loginUser(LoginRequest req) throws UserException {
         userRep.save(user);
         logger.info("Password reset successful for user: {}", user.getEmail());
     }
+
+
+    @Override
+    public boolean isResetTokenValid(String token) {
+        return userRep.findByResetToken(token).isPresent();
+    }
+
 }

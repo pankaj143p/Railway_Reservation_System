@@ -11,10 +11,16 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     public void sendResetEmail(String to, String resetLink) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject("Password Reset Request");
-        message.setText("To reset your password, click the link below:\n" + resetLink);
-        mailSender.send(message);
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject("Password Reset Request");
+            message.setText("To reset your password, click the link below:\n" + resetLink);
+            mailSender.send(message);
+            System.out.println("Reset email sent to: " + to);
+        } catch (Exception e) {
+            System.err.println("Failed to send reset email to " + to + ": " + e.getMessage());
+            throw e;
+        }
     }
 }

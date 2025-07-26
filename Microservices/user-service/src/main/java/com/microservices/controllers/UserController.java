@@ -10,8 +10,10 @@ import com.microservices.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +27,7 @@ public class UserController {
     // for logging and debugging
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userSer;
-    
+
     // Register a new user
     @PostMapping("/register")
     public ResponseEntity<?> createUser(@Valid @RequestBody RegisterRequest user) {
@@ -38,7 +40,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
-    
+
     // Login an existing user
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest req) {
@@ -52,7 +54,6 @@ public class UserController {
         }
     }
 
-
     // Get all users
     @GetMapping()
     public ResponseEntity<List<User>> getAllUser() {
@@ -61,20 +62,34 @@ public class UserController {
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-
     // Search users by name, email, or phone
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable Long id) {
-        try {
-            User user = userSer.getUserById(id);
-            logger.info("Fetched user by id: {}", id);
-            return new ResponseEntity<>(user, HttpStatus.OK);
-        } catch (UserException e) {
-            logger.error("User not found: {}", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    // @GetMapping("/{id}")
+    // public ResponseEntity<?> getUserById(@PathVariable Long id) {
+    //     try {
+    //         User user = userSer.getUserById(id);
+    //         logger.info("Fetched user by id: {}", id);
+    //         return new ResponseEntity<>(user, HttpStatus.OK);
+    //     } catch (UserException e) {
+    //         logger.error("User not found: {}", id);
+    //         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    //     }
+    // }
+    // ...existing code...
+
+// Get user by ID (change path to avoid conflict)
+@GetMapping("/id/{id}")
+public ResponseEntity<?> getUserById(@PathVariable Long id) {
+    try {
+        User user = userSer.getUserById(id);
+        logger.info("Fetched user by id: {}", id);
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    } catch (UserException e) {
+        logger.error("User not found: {}", id);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
-    
+}
+
+
     // Update user details
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
@@ -87,7 +102,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-    
+
     // Delete user by ID
     @PatchMapping("/{id}")
     public ResponseEntity<?> inactiveUser(@PathVariable Long id) {
@@ -100,7 +115,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-
 
     // Validate JWT token
     @GetMapping("/validate")
@@ -115,12 +129,32 @@ public class UserController {
         }
     }
 
+    // @Value("${app.url}")
+    // private String appUrl;
+    // // Password reset functionality
+    // @PostMapping("/forgot-password")
+    // public ResponseEntity<?> forgotPassword(@RequestParam String email,
+    // HttpServletRequest req) {
+    // try {
+    // String appUrl = req.getRequestURL().toString().replace(req.getRequestURI(),
+    // req.getContextPath());
+    // userSer.initiatePasswordReset(email, appUrl);
+    // logger.info("Password reset initiated for: {}", email);
+    // return ResponseEntity.ok("If your email exists, a reset link has been
+    // sent.");
+    // } catch (Exception e) {
+    // logger.error("Password reset failed for {}: {}", email, e.getMessage());
+    // return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed
+    // to initiate password reset.");
+    // }
+    // }
+    @Value("${app.url}")
+    private String appUrl;
 
     // Password reset functionality
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestParam String email, HttpServletRequest req) {
+    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         try {
-            String appUrl = req.getRequestURL().toString().replace(req.getRequestURI(), req.getContextPath());
             userSer.initiatePasswordReset(email, appUrl);
             logger.info("Password reset initiated for: {}", email);
             return ResponseEntity.ok("If your email exists, a reset link has been sent.");
@@ -130,16 +164,27 @@ public class UserController {
         }
     }
 
-    // Reset password using token
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        try {
-            userSer.resetPassword(token, newPassword);
-            logger.info("Password reset successful for token: {}", token);
-            return ResponseEntity.ok("Password reset successful.");
-        } catch (Exception e) {
-            logger.error("Password reset failed for token {}: {}", token, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired token.");
-        }
+   // Show reset password page or validate token (GET)
+@GetMapping("/reset-password")
+public ResponseEntity<?> showResetPasswordPage(@RequestParam String token) {
+    boolean valid = userSer.isResetTokenValid(token);
+    if (valid) {
+        return ResponseEntity.ok("Token is valid. Show reset password form here.");
+    } else {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired token.");
     }
+}
+
+// Actually reset the password (POST)
+@PostMapping("/reset-password")
+public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+    try {
+        userSer.resetPassword(token, newPassword);
+        logger.info("Password reset successful for token: {}", token);
+        return ResponseEntity.ok("Password reset successful.");
+    } catch (Exception e) {
+        logger.error("Password reset failed for token {}: {}", token, e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired token.");
+    }
+}
 }
