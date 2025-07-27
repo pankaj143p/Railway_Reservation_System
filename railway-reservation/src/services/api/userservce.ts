@@ -193,22 +193,22 @@ export const loginUser = async (credentials: { email: string; password: string }
 };
 
 // Validate token
-export const validateToken = async (token: string): Promise<any> => {
-  try {
-    console.log('Validating token');
-    const res = await axios.post(`${API_URL}/api/users/validate-token`, 
-      { token }, 
-      {
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
-    console.log('Token validation successful:', res.data);
-    return res.data;
-  } catch (error) {
-    console.error('Error validating token:', error);
-    throw error;
-  }
-};
+// export const validateToken = async (token: string): Promise<any> => {
+//   try {
+//     console.log('Validating token');
+//     const res = await axios.post(`${API_URL}/api/users/validate-token`, 
+//       { token }, 
+//       {
+//         headers: { 'Content-Type': 'application/json' }
+//       }
+//     );
+//     console.log('Token validation successful:', res.data);
+//     return res.data;
+//   } catch (error) {
+//     console.error('Error validating token:', error);
+//     throw error;
+//   }
+// };
 
 // Forgot password
 export const forgotPassword = async (email: string, appUrl: string): Promise<any> => {
@@ -228,20 +228,14 @@ export const forgotPassword = async (email: string, appUrl: string): Promise<any
   }
 };
 
+// Validate token
+export const validateToken = async (token: string): Promise<any> => {
+  const res = await axios.post(`${API_URL}/api/users/validate-token`, { token });
+  return res.data;
+};
+
 // Reset password
 export const resetPassword = async (token: string, newPassword: string): Promise<any> => {
-  try {
-    console.log('Resetting password');
-    const res = await axios.post(`${API_URL}/api/users/reset-password`, 
-      { token, newPassword }, 
-      {
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
-    console.log('Password reset successful:', res.data);
-    return res.data;
-  } catch (error) {
-    console.error('Error resetting password:', error);
-    throw error;
-  }
+  const res = await axios.post(`${API_URL}/api/users/reset-password`, { token, newPassword });
+  return res.data;
 };
