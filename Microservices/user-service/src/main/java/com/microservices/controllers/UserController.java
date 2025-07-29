@@ -6,8 +6,6 @@ import com.microservices.dto.RegisterRequest;
 import com.microservices.exception.UserException;
 import com.microservices.model.User;
 import com.microservices.services.UserService;
-
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
