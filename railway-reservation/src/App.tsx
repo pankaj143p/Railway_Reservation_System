@@ -43,6 +43,8 @@ function App() {
             element={isLoggedIn ? <Navigate to="/" replace /> : <Signup />}
           />
 
+          {/* Protected Routes */}
+
           <Route path="/trainList" element={<TrainDetails />} />
           <Route path="/book/:trainId" element={<Book />} />
           <Route path='/confirmed/:orderId' element={<Booked />} />
