@@ -50,7 +50,7 @@ function App() {
           <Route path='/confirmed/:orderId' element={<Booked />} />
           <Route path='/users' element={<UsersPage />} />
           <Route path='trains' element={<TrainsPage />} />
-          <Route path='/forgot' element={<ForgotPassword/>} />
+          <Route path='/forgot-password' element={<ForgotPassword/>} />
           <Route path='/ticket' element={<BookingSuccess />} />
           <Route
             path='/bookedtickets'
