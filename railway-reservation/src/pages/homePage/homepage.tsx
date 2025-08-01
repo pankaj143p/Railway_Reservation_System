@@ -3,6 +3,7 @@ import { Navbar } from '../../components/navbar';
 // import Card from './Card'; // Adjust the path if needed
 import Card from '../../components/ui/card/socialcard'; // Adjust the path if needed
 
+// Features data for the homepage
 const features = [
   {
     title: "Easy Booking",
@@ -22,6 +23,8 @@ const features = [
   },
 ];
 
+
+// HomePage component
 const HomePage = () => (
   <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-blue-100">
     {/* Header */}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import UserForm from "../../components/ui/form";
 
+// TicketManager component to handle ticket management
 const TicketManager = () => {
   const [tickets, setTickets] = useState<Array<{
     fullName: string;
@@ -9,7 +10,10 @@ const TicketManager = () => {
     email: string;
     date: string;
   }>>([]);
-
+   
+  // Function to handle form submission
+  // It receives form data and updates the tickets state
+  // It also logs the updated tickets to the console
   const handleFormSubmit = (formData: {
     fullName: string;
     seatCount: string;
