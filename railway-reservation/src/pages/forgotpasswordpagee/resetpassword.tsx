@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { resetPassword, validateToken } from "../../services/api/userservce";
+import { resetPassword } from "../../services/api/userservce";
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
@@ -8,15 +8,6 @@ const ResetPasswordPage = () => {
   const [newPassword, setNewPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
-  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (token) {
-      validateToken(token)
-        .then(() => setTokenValid(true))
-        .catch(() => setTokenValid(false));
-    }
-  }, [token]);
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +22,6 @@ const ResetPasswordPage = () => {
   };
 
   if (!token) return <div className="text-center mt-16 text-red-600">Invalid reset link.</div>;
-  if (tokenValid === null) return <div className="text-center mt-16">Checking token...</div>;
-  if (tokenValid === false) return <div className="text-center mt-16 text-red-600">Invalid or expired token.</div>;
 
   return (
     <div className="max-w-md mx-auto mt-16 bg-white shadow-lg rounded-lg p-8">

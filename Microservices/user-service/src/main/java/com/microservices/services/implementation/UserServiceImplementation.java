@@ -147,7 +147,7 @@ public AuthResponse loginUser(LoginRequest req) throws UserException {
             String token = UUID.randomUUID().toString();
             user.setResetToken(token);
             userRep.save(user);
-            String resetLink = appUrl + "/reset-password?token="+token;
+            String resetLink = "http://localhost:5173/reset-password?token="+token;
             emailService.sendResetEmail(email, resetLink);
             logger.info("Password reset initiated for: {}", email);
         } else {

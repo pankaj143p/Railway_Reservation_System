@@ -214,8 +214,8 @@ export const loginUser = async (credentials: { email: string; password: string }
 export const forgotPassword = async (email: string, appUrl: string): Promise<any> => {
   try {
     console.log('Initiating password reset for:', email);
-    const res = await axios.post(`${API_URL}/api/users/forgot-password`, 
-      { email, appUrl }, 
+    const res = await axios.post(`${API_URL}/api/users/forgot-password?email=${encodeURIComponent(email)}&appUrl=${encodeURIComponent(appUrl)}`, 
+      {},
       {
         headers: { 'Content-Type': 'application/json' }
       }
@@ -236,6 +236,8 @@ export const validateToken = async (token: string): Promise<any> => {
 
 // Reset password
 export const resetPassword = async (token: string, newPassword: string): Promise<any> => {
-  const res = await axios.post(`${API_URL}/api/users/reset-password`, { token, newPassword });
+  const res = await axios.post(
+  `${API_URL}/api/users/reset-password?token=${encodeURIComponent(token)}&newPassword=${encodeURIComponent(newPassword)}`
+);
   return res.data;
 };

@@ -20,6 +20,7 @@ import ContactUs from './pages/contactUsPage/contactus';
 import Policy from './pages/policyPage/policy';
 import Bot from './components/bot/Bot';
 import ForgotPassword from './pages/forgotpasswordpagee/forgotpassword';
+import ResetPasswordPage from './pages/forgotpasswordpagee/resetpassword';
 
 function App() {
   const isLoggedIn = !!localStorage.getItem("token");
@@ -51,6 +52,7 @@ function App() {
           <Route path='/users' element={<UsersPage />} />
           <Route path='trains' element={<TrainsPage />} />
           <Route path='/forgot-password' element={<ForgotPassword/>} />
+          <Route path='/reset-password' element={<ResetPasswordPage/>} />
           <Route path='/ticket' element={<BookingSuccess />} />
           <Route
             path='/bookedtickets'
