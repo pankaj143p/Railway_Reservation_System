@@ -175,5 +175,5 @@ public AuthResponse loginUser(LoginRequest req) throws UserException {
     public boolean isResetTokenValid(String token) {
         return userRep.findByResetToken(token).isPresent();
     }
-
 }
+

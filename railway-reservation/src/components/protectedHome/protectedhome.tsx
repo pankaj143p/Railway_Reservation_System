@@ -6,24 +6,23 @@ const ProtectedHome = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role"); // "admin" or "user"
-    
-    
+    const role = localStorage.getItem("role"); 
+
     if (token) {
       if (role === "ROLE_ADMIN") {
         navigate("/admin/dashboard", { replace: true });
       } else if (role === "ROLE_USER") {
         navigate("/trainList", { replace: true });
       } else {
-        // Unknown role, fallback
         navigate("/login", { replace: true });
       }
-    }else{
-      navigate("/home", { replace: true }); // Redirect to login if no token
+    } else {
+      navigate("/home", { replace: true });
     }
   }, [navigate]);
 
-  return null;
+  // Optional: Show a loading message while redirecting
+  return <div style={{ textAlign: "center", marginTop: "2rem" }}>Redirecting...</div>;
 };
 
 export default ProtectedHome;

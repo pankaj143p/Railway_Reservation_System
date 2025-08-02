@@ -24,7 +24,6 @@ import ResetPasswordPage from './pages/forgotpasswordpagee/resetpassword';
 
 function App() {
   const isLoggedIn = !!localStorage.getItem("token");
-
   return (
     <>
       <BrowserRouter>
@@ -51,8 +50,8 @@ function App() {
           <Route path='/confirmed/:orderId' element={<Booked />} />
           <Route path='/users' element={<UsersPage />} />
           <Route path='trains' element={<TrainsPage />} />
-          <Route path='/forgot-password' element={<ForgotPassword/>} />
-          <Route path='/reset-password' element={<ResetPasswordPage/>} />
+          <Route path='/forgot-password' element= {isLoggedIn ? <Navigate to="/" replace /> : <ForgotPassword/>} />
+          <Route path='/reset-password' element={isLoggedIn ? <Navigate to="/" replace /> : <ResetPasswordPage/>} />
           <Route path='/ticket' element={<BookingSuccess />} />
           <Route
             path='/bookedtickets'
