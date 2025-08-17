@@ -15,6 +15,7 @@ export default tseslint.config(
       globals: globals.browser,
     },
     // This is the recommended configuration for TypeScript.
+
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
