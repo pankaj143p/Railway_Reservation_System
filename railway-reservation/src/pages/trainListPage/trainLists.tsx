@@ -7,11 +7,11 @@ const TrainDetails = () => {
   const [trains, setTrains] = useState<Train[]>([]);
   const [filteredTrains, setFilteredTrains] = useState<Train[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  // @ts-ignore - searchDate is used in form input but TypeScript doesn't detect it
   const [searchDate, setSearchDate] = useState("");
   const [sourceStation, setSourceStation] = useState("");
   const [destinationStation, setDestinationStation] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
   const [validationError, setValidationError] = useState("");
     
   // pagination 
@@ -20,16 +20,23 @@ const TrainDetails = () => {
   
   useEffect(() => {
     const getTrains = async () => {
-      const data = await fetchAvailableTrains();
-      if (data) {
-        setTrains(data);
-        setFilteredTrains(data);
+      setIsLoading(true); // Start loading
+      try {
+        const data = await fetchAvailableTrains();
+        if (data) {
+          setTrains(data);
+          setFilteredTrains(data);
+        }
+      } catch (error) {
+        console.error('Error fetching trains:', error);
+      } finally {
+        setIsLoading(false); // End loading
       }
     };
     getTrains();
   }, []);
   
-   const paginationData = useMemo(() => {
+  const paginationData = useMemo(() => {
     const totalTrains = filteredTrains.length;
     const totalPages = Math.ceil(totalTrains / trainsPerPage);
     const startIndex = (currentPage - 1) * trainsPerPage;
@@ -49,12 +56,9 @@ const TrainDetails = () => {
     setCurrentPage(1);
   }, [filteredTrains]);
 
-
   const handleSearch = async () => {
-    // Clear any previous validation errors
     setValidationError("");
     
-    // Validate that source and destination are not the same
     if (sourceStation && destinationStation && 
         sourceStation.toLowerCase().trim() === destinationStation.toLowerCase().trim()) {
       setValidationError("Source and destination stations cannot be the same!");
@@ -64,7 +68,6 @@ const TrainDetails = () => {
     setIsSearching(true);
     
     try {
-      // Simple text search
       const query = searchQuery.toLowerCase();
       let filtered = trains.filter(train =>
         train.trainName.toLowerCase().includes(query) ||
@@ -72,7 +75,6 @@ const TrainDetails = () => {
         train.destination.toLowerCase().includes(query)
       );
 
-      // Additional filtering by station if provided
       if (sourceStation) {
         filtered = filtered.filter(train =>
           train.source.toLowerCase().includes(sourceStation.toLowerCase())
@@ -93,19 +95,15 @@ const TrainDetails = () => {
     }
   };
 
-  // Handle source station change with validation
   const handleSourceChange = (value: string) => {
     setSourceStation(value);
-    // Clear validation error if stations are now different
     if (validationError && value.toLowerCase().trim() !== destinationStation.toLowerCase().trim()) {
       setValidationError("");
     }
   };
 
-  // Handle destination station change with validation  
   const handleDestinationChange = (value: string) => {
     setDestinationStation(value);
-    // Clear validation error if stations are now different
     if (validationError && sourceStation.toLowerCase().trim() !== value.toLowerCase().trim()) {
       setValidationError("");
     }
@@ -120,9 +118,8 @@ const TrainDetails = () => {
     setFilteredTrains(trains);
   };
 
-    const goToPage = (page: number) => {
+  const goToPage = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top of results
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -138,7 +135,7 @@ const TrainDetails = () => {
     }
   };
   
-   const getPageNumbers = () => {
+  const getPageNumbers = () => {
     const pages = [];
     const totalPages = paginationData.totalPages;
     
@@ -147,7 +144,6 @@ const TrainDetails = () => {
         pages.push(i);
       }
     } else {
-      // Show smart pagination
       if (currentPage <= 4) {
         pages.push(1, 2, 3, 4, 5, '...', totalPages);
       } else if (currentPage >= totalPages - 3) {
@@ -159,6 +155,27 @@ const TrainDetails = () => {
     
     return pages;
   };
+
+  // Loading Component
+  const LoadingSpinner = () => (
+    <div className="flex justify-center items-center min-h-[400px]">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 text-lg font-medium">Loading trains...</p>
+        <p className="text-gray-500 text-sm mt-2">Please wait while we fetch available trains</p>
+      </div>
+    </div>
+  );
+
+  // Show loading spinner while fetching data
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center p-8 bg-gray-100 pt-20">
+        <h1 className="text-3xl font-bold text-cyan-600 mb-6 text-center">Search Trains</h1>
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center p-8 bg-gray-100 pt-20">
@@ -241,17 +258,6 @@ const TrainDetails = () => {
             />
           </div>
           
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Travel Date</label>
-            <input
-              type="date"
-              value={searchDate}
-              onChange={e => setSearchDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div> */}
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Or Search By Name</label>
             <input
@@ -267,9 +273,16 @@ const TrainDetails = () => {
             <button
               onClick={handleSearch}
               disabled={isSearching}
-              className="px-4 py-2 bg-cyan-600 text-white font-bold rounded-md hover:bg-cyan-700 transition disabled:opacity-50"
+              className="px-4 py-2 bg-cyan-600 text-white font-bold rounded-md hover:bg-cyan-700 transition disabled:opacity-50 flex items-center justify-center"
             >
-              {isSearching ? 'Searching...' : 'Search'}
+              {isSearching ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Searching...
+                </>
+              ) : (
+                'Search'
+              )}
             </button>
             <button
               onClick={clearSearch}
@@ -282,7 +295,7 @@ const TrainDetails = () => {
       </div>
       
       {/* Pagination Controls */}
-       {filteredTrains.length > 0 && (
+      {filteredTrains.length > 0 && (
         <div className="w-full max-w-7xl mb-4">
           <div className="flex justify-between items-center text-sm text-gray-600">
             <span>
@@ -297,7 +310,7 @@ const TrainDetails = () => {
 
       <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
         {filteredTrains.length > 0 ? (
-          filteredTrains.map(train => (
+          paginationData.currentTrains.map(train => (
             <Card
               key={train.trainId}
               train={train}
@@ -310,10 +323,9 @@ const TrainDetails = () => {
         )}
       </div>
 
-        {/* Pagination Controls */}
+      {/* Pagination Controls */}
       {paginationData.totalPages > 1 && (
-        <div className="w-full max-w-7xl flex justify-center items-center space-x-2 mb-8">
-          {/* Previous Button */}
+        <div className="w-full max-w-7xl flex justify-center items-center space-x-2 mt-8 mb-8">
           <button
             onClick={goToPreviousPage}
             disabled={currentPage === 1}
@@ -322,7 +334,6 @@ const TrainDetails = () => {
             Previous
           </button>
 
-          {/* Page Numbers */}
           <div className="flex space-x-1">
             {getPageNumbers().map((page, index) => (
               <div key={index}>
@@ -330,7 +341,7 @@ const TrainDetails = () => {
                   <span className="px-3 py-2 text-sm text-gray-400">...</span>
                 ) : (
                   <button
-                     onClick={() => goToPage(page as number)}
+                    onClick={() => goToPage(page as number)}
                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                       currentPage === page
                         ? 'bg-cyan-600 text-white border border-cyan-600'
@@ -344,7 +355,6 @@ const TrainDetails = () => {
             ))}
           </div>
 
-          {/* Next Button */}
           <button
             onClick={goToNextPage}
             disabled={currentPage === paginationData.totalPages}
@@ -354,7 +364,8 @@ const TrainDetails = () => {
           </button>
         </div>
       )}
-       {/* Quick Jump to Page */}
+      
+      {/* Quick Jump to Page */}
       {paginationData.totalPages > 5 && (
         <div className="w-full max-w-7xl flex justify-center items-center space-x-2 text-sm text-gray-600">
           <span>Jump to page:</span>

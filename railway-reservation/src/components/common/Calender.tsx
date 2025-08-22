@@ -404,11 +404,11 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
             <h4>{trainDetails?.trainName}</h4>
             <p>{trainDetails?.source} → {trainDetails?.destination}</p>
             <p>Total Seats: {trainDetails?.totalSeats}</p>
-            {inactiveDates.length > 0 && (
-              <p style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px' }}>
-                ⚠️ {inactiveDates.length} inactive date(s) this month
-              </p>
-            )}
+              {/* {inactiveDates.length > 0 && (
+                <p style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px' }}>
+                  ⚠️ {inactiveDates.length} inactive date(s) this month
+                </p>
+              )} */}
           </TrainInfo>
 
           {internalSelectedDate && (
