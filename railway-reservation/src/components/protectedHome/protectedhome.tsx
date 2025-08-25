@@ -1,10 +1,16 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { checkTokenAndLogout } from "../../utils/tokenUtils";
 
 const ProtectedHome = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if token is expired first
+    if (checkTokenAndLogout()) {
+      return; // Will redirect to login automatically
+    }
+
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role"); 
 

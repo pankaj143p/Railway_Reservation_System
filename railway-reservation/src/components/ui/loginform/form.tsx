@@ -33,6 +33,12 @@ const LoginForm = () => {
       const decodedToken: any = jwtDecode(token);
       const role = decodedToken.role || decodedToken.authorities || decodedToken.roles || "";
       localStorage.setItem('role', role);
+      
+      // Store expiration time for monitoring
+      if (decodedToken.exp) {
+        localStorage.setItem('tokenExp', decodedToken.exp.toString());
+      }
+      
       setSuccess(true);
 
       setTimeout(() => {

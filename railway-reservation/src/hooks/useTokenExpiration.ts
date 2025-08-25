@@ -1,10 +1,7 @@
 import { useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { isTokenExpired, getTokenExpirationTime, logout } from '../utils/tokenUtils';
 
 export const useTokenExpiration = () => {
-  const navigate = useNavigate();
-
   const checkAndLogout = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) {
