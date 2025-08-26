@@ -11,7 +11,7 @@ export const loginUser = async (
       console.log('Logging in user:', email);
       const res = await apiClient.post('/api/users/login', { email, password });
       console.log('Login successful:', res.data);
-      return res.data; // Assuming this returns the JWT token
+      return res.data; 
     } catch (error) {
       console.error('Error logging in:', error);
       if (typeof error === "object" && error !== null && "response" in error) {
