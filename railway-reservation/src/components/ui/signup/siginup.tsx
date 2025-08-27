@@ -110,7 +110,8 @@ try {
             </div>
             <div className="input-block">
               <span className="forgot">
-                <a href="/login">Already have an account?  Login</a>
+                <p className='text-blue-900'>Already have an account?</p>
+                <a href="/login">Login</a>
               </span>
               <button type="submit">Sign Up</button>
             </div>
