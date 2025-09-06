@@ -18,7 +18,7 @@ import About from './pages/aboutPage/about';
 import Services from './pages/servicesPage/services';
 import ContactUs from './pages/contactUsPage/contactus';
 import Policy from './pages/policyPage/policy';
-import Bot from './components/bot/Bot';
+import Chatbot from './components/bot/Chatbot';
 import ForgotPassword from './pages/forgotpasswordpagee/forgotpassword';
 import ResetPasswordPage from './pages/forgotpasswordpagee/resetpassword';
 
@@ -28,7 +28,7 @@ function App() {
     <>
       <BrowserRouter>
         <Navbar />
-        <Bot />
+        <Chatbot />
         <Routes>
           <Route path="/" element={<ProtectedHome />} />
           <Route path="/admin/dashboard" element={<Dashboard />} />

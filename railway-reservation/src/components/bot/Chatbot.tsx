@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, Send, Bot, User, Minimize2, Maximize2 } from 'lucide-react';
 import { Button } from '../ui/button';
-import chatbotService, { ChatMessage } from '../../services/api/chatbotService';
+import chatbotService from '../../services/api/chatbotService';
 import { cn } from '../../lib/utils';
 
 interface Message {
@@ -75,7 +75,7 @@ const Chatbot: React.FC = () => {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev: Message[]) => [...prev, userMessage]);
     setInputMessage('');
     setIsTyping(true);
 
@@ -87,7 +87,7 @@ const Chatbot: React.FC = () => {
         isBot: true,
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, botMessage]);
+      setMessages((prev: Message[]) => [...prev, botMessage]);
     } catch (error) {
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
@@ -95,7 +95,7 @@ const Chatbot: React.FC = () => {
         isBot: true,
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev: Message[]) => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
     }
