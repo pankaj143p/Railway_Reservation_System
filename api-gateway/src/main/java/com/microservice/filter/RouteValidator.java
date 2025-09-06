@@ -21,7 +21,8 @@ public class RouteValidator {
             "/trains/available/**",
             "/trains/operational-status/**",
             "/trains/getAllInActiveDates/**",
-            "/eureka"
+            "/eureka",
+            "/api/chatbot/**"
     );
 
     public Predicate<ServerHttpRequest> isSecured = req -> {
