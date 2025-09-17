@@ -42,6 +42,7 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+/VIDEO_SCRIPT.md
 
 # Logs
 logs

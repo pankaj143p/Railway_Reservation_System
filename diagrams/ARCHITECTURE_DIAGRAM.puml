@@ -1,0 +1,239 @@
+@startuml Railway Reservation System Architecture
+
+!define AWSPUML https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v18.0/dist
+!include AWSPUML/AWSCommon.puml
+!include AWSPUML/Compute/EC2.puml
+!include AWSPUML/Database/RDS.puml
+!include AWSPUML/ApplicationIntegration/SimpleQueueService.puml
+!include AWSPUML/SecurityIdentityCompliance/IdentityandAccessManagement.puml
+
+title Railway Reservation System - Complete Architecture
+
+' Define custom components
+!define SPRINGBOOT
+!define REACT
+!define DATABASE
+!define GATEWAY
+!define KAFKA
+!define EUREKA
+
+' User Layer
+package "User Interface Layer" as UI #LightBlue {
+    rectangle "React Web App\n(Port 3000)" as ReactApp #LightGreen
+    rectangle "Mobile App\n(Future)" as MobileApp #LightGreen
+    rectangle "Admin Portal" as AdminPortal #LightGreen
+    rectangle "AI Chatbot Widget" as ChatbotWidget #LightGreen
+}
+
+' API Gateway Layer
+package "API Gateway Layer" as GatewayLayer #LightYellow {
+    rectangle "Spring Cloud Gateway\n(Port 8080)" as ApiGateway #Orange
+    note right of ApiGateway
+        - Authentication & Authorization
+        - Rate Limiting & Circuit Breaker
+        - CORS Configuration
+        - Request Routing
+        - Security Headers
+    end note
+}
+
+' Service Discovery Layer
+package "Service Discovery Layer" as DiscoveryLayer #LightCyan {
+    rectangle "Netflix Eureka Server\n(Port 8761)" as EurekaServer #Cyan
+    note right of EurekaServer
+        - Service Registration
+        - Health Monitoring
+        - Load Balancing
+        - Instance Management
+    end note
+}
+
+' Microservices Layer
+package "Microservices Layer" as Microservices #LightGreen {
+    rectangle "User Service\n(Port 5000)" as UserService #Green
+    rectangle "Train Service\n(Port 5200)" as TrainService #Green
+    rectangle "Ticket Service\n(Port 5100)" as TicketService #Green
+    rectangle "Payment Service\n(Port 5300)" as PaymentService #Green
+    rectangle "Notification Service\n(Port 5400)" as NotificationService #Green
+    rectangle "Admin Service\n(Port 5500)" as AdminService #Green
+    rectangle "Chatbot Service\n(Port 8085)" as ChatbotService #Green
+}
+
+' Data & Messaging Layer
+package "Data & Messaging Layer" as DataLayer #LightPink {
+    database "PostgreSQL\nUser DB\n(Port 5432)" as UserDB #Pink
+    database "PostgreSQL\nTrain DB\n(Port 5433)" as TrainDB #Pink
+    database "PostgreSQL\nTicket DB\n(Port 5434)" as TicketDB #Pink
+    database "PostgreSQL\nPayment DB\n(Port 5435)" as PaymentDB #Pink
+
+    rectangle "Apache Kafka\n(Port 9092)" as Kafka #Red
+    note right of Kafka
+        - Event Streaming
+        - Message Queuing
+        - Real-time Processing
+        - Async Communication
+    end note
+}
+
+' External Integrations
+package "External Integrations" as External #LightGray {
+    rectangle "OpenAI API\n(Chatbot)" as OpenAI #Gray
+    rectangle "Razorpay\n(Payments)" as Razorpay #Gray
+    rectangle "Email Service\n(Gmail/SMTP)" as EmailService #Gray
+    rectangle "SMS Service\n(Twilio)" as SMSService #Gray
+}
+
+' Infrastructure Layer
+package "Infrastructure & DevOps" as Infra #LightYellow {
+    rectangle "Docker\nContainers" as Docker #Yellow
+    rectangle "Kubernetes\n(Future)" as K8s #Yellow
+    rectangle "Jenkins\nCI/CD" as Jenkins #Yellow
+    rectangle "ELK Stack\nMonitoring" as ELK #Yellow
+    rectangle "GitHub\nRepository" as GitHub #Yellow
+    rectangle "AWS/GCP\nCloud" as Cloud #Yellow
+}
+
+' Define relationships and data flow
+ReactApp --> ApiGateway : HTTPS/REST
+MobileApp --> ApiGateway : HTTPS/REST
+AdminPortal --> ApiGateway : HTTPS/REST
+ChatbotWidget --> ApiGateway : HTTPS/REST
+
+ApiGateway --> EurekaServer : Service Discovery
+EurekaServer --> UserService : Service Registration
+EurekaServer --> TrainService : Service Registration
+EurekaServer --> TicketService : Service Registration
+EurekaServer --> PaymentService : Service Registration
+EurekaServer --> NotificationService : Service Registration
+EurekaServer --> AdminService : Service Registration
+EurekaServer --> ChatbotService : Service Registration
+
+UserService --> UserDB : JPA/Hibernate
+TrainService --> TrainDB : JPA/Hibernate
+TicketService --> TicketDB : JPA/Hibernate
+PaymentService --> PaymentDB : JPA/Hibernate
+
+UserService --> Kafka : Events
+TrainService --> Kafka : Events
+TicketService --> Kafka : Events
+PaymentService --> Kafka : Events
+NotificationService --> Kafka : Events
+AdminService --> Kafka : Events
+ChatbotService --> Kafka : Events
+
+Kafka --> NotificationService : Event Consumption
+Kafka --> AdminService : Event Consumption
+Kafka --> UserService : Event Consumption
+
+ChatbotService --> OpenAI : AI Integration
+PaymentService --> Razorpay : Payment Processing
+NotificationService --> EmailService : Email Notifications
+NotificationService --> SMSService : SMS Notifications
+
+UserService --> Docker : Containerized
+TrainService --> Docker : Containerized
+TicketService --> Docker : Containerized
+PaymentService --> Docker : Containerized
+NotificationService --> Docker : Containerized
+AdminService --> Docker : Containerized
+ChatbotService --> Docker : Containerized
+ApiGateway --> Docker : Containerized
+EurekaServer --> Docker : Containerized
+ReactApp --> Docker : Containerized
+
+Docker --> K8s : Orchestration
+K8s --> Cloud : Deployment
+Jenkins --> Cloud : CI/CD Pipeline
+ELK --> Cloud : Monitoring
+GitHub --> Jenkins : Code Repository
+
+' Add component details as notes
+note as UserServiceNote
+    **User Service Features:**
+    - User Registration & Authentication
+    - JWT Token Management
+    - Profile Management
+    - Role-based Access Control
+end note
+
+note as TrainServiceNote
+    **Train Service Features:**
+    - Train Schedule Management
+    - Route Information
+    - Seat Availability
+    - Search & Filtering
+end note
+
+note as TicketServiceNote
+    **Ticket Service Features:**
+    - Booking Management
+    - PNR Generation
+    - Seat Selection
+    - Cancellation & Refunds
+end note
+
+note as PaymentServiceNote
+    **Payment Service Features:**
+    - Razorpay Integration
+    - Payment Processing
+    - Refund Management
+    - Transaction History
+end note
+
+note as NotificationServiceNote
+    **Notification Service Features:**
+    - Email/SMS Templates
+    - Real-time Notifications
+    - WebSocket Integration
+    - Multi-channel Support
+end note
+
+note as AdminServiceNote
+    **Admin Service Features:**
+    - User Management
+    - Analytics Dashboard
+    - System Monitoring
+    - Report Generation
+end note
+
+note as ChatbotServiceNote
+    **Chatbot Service Features:**
+    - OpenAI Integration
+    - Voice/Text Chat
+    - File Upload Support
+    - Theme Customization
+end note
+
+' Security and monitoring overlays
+note as SecurityNote
+    **Security Features:**
+    - JWT Authentication
+    - Spring Security
+    - CSRF Protection
+    - Input Validation
+    - HTTPS Encryption
+    - Rate Limiting
+end note
+
+note as MonitoringNote
+    **Monitoring & Observability:**
+    - ELK Stack (Elasticsearch, Logstash, Kibana)
+    - Application Metrics
+    - Health Checks
+    - Performance Monitoring
+    - Error Tracking
+end note
+
+' Architecture patterns note
+note as PatternsNote
+    **Architecture Patterns:**
+    - Microservices Architecture
+    - API Gateway Pattern
+    - Service Discovery Pattern
+    - Event-Driven Architecture
+    - Database per Service
+    - Circuit Breaker Pattern
+    - CQRS (planned)
+end note
+
+@enduml
