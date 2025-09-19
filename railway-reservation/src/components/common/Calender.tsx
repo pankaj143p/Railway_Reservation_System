@@ -227,7 +227,14 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
         const operationalStatus = await checkTrainOperationalStatus(dateStr);
         
         if (!operationalStatus.isOperational) {
-          setModalMessage(`Train not operational on ${new Date(dateStr).toLocaleDateString()}\nReason: ${operationalStatus.reason || 'Service unavailable'}`);
+          const formattedDate = new Date(dateStr).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          
+          setModalMessage(`Train not operational on ${formattedDate}\n${operationalStatus.reason ? `Reason: ${operationalStatus.reason}` : 'Please try another date or contact support for more information.'}`);
           setShowErrorModal(true);
           
           setSeatAvailability(prev => ({
@@ -293,13 +300,26 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
       
       const trainStatus = trainStatusResponse.data;
       
-      return {
-        isOperational: trainStatus==="OPERATIONAL",
-        reason: trainStatus.reason
-      };
+      // Handle different response formats
+      if (typeof trainStatus === 'string') {
+        return {
+          isOperational: trainStatus === "OPERATIONAL",
+          reason: trainStatus !== "OPERATIONAL" ? "Service unavailable" : undefined
+        };
+      } else if (typeof trainStatus === 'object' && trainStatus !== null) {
+        return {
+          isOperational: trainStatus.status === "OPERATIONAL" || trainStatus.isOperational === true,
+          reason: trainStatus.reason || (trainStatus.status !== "OPERATIONAL" ? "Service unavailable" : undefined)
+        };
+      }
+      
+      // Default fallback - assume operational if unclear response
+      return { isOperational: true };
+      
     } catch (error) {
       console.error(`Error checking operational status for ${dateStr}:`, error);
       
+      // If API fails, check demo dates for testing
       const dayOfMonth = new Date(dateStr).getDate();
       
       if (dayOfMonth === 15) {
@@ -310,6 +330,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
         return { isOperational: false, reason: 'Weather conditions' };
       }
       
+      // Default to operational if no specific demo restrictions
       return { isOperational: true };
     }
   };
