@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import SeatBooking from '../booking/SeatBooking';
 
 interface CalendarProps {
   trainId: string;
@@ -52,6 +53,7 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
   const [modalMessage, setModalMessage] = useState('');
   const [selectedDateFormatted, setSelectedDateFormatted] = useState('');
   const [inactiveDates, setInactiveDates] = useState<string[]>([]);
+  const [showSeatBooking, setShowSeatBooking] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_GATEWAY_URL;
   const navigate = useNavigate();
@@ -331,8 +333,21 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
     localStorage.setItem('selectedTravelDate', selectedDate);
     localStorage.setItem('selectedTrainId', trainId);
     
-    setShowSuccessModal(true);
+    // Show seat booking component instead of success modal
+    setShowSeatBooking(true);
     onDateSelect(selectedDate);
+  };
+
+  const handleBookingComplete = (bookingDetails: any) => {
+    console.log('Booking completed:', bookingDetails);
+    setShowSeatBooking(false);
+    setShowSuccessModal(true);
+  };
+
+  const handleBookingClose = () => {
+    setShowSeatBooking(false);
+    setInternalSelectedDate('');
+    setSelectedDateFormatted('');
   };
 
   const checkTrainOperationalStatus = async (dateStr: string): Promise<{isOperational: boolean, reason?: string}> => {
@@ -682,6 +697,17 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
             </ModalButtonGroup>
           </ModalContainer>
         </ModalOverlay>
+      )}
+
+      {/* Seat Booking Component */}
+      {showSeatBooking && (
+        <SeatBooking
+          trainId={trainId}
+          trainDetails={trainDetails}
+          selectedDate={internalSelectedDate}
+          onBookingComplete={handleBookingComplete}
+          onClose={handleBookingClose}
+        />
       )}
     </>
   );
