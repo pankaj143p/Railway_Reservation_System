@@ -6,6 +6,7 @@ const menu = [
   { icon: "👥", label: "Users", path: "/users" },
   { icon: "🚆", label: "Trains", path: "/trains" },
   { icon: "🎫", label: "Tickets", path: "/tickets" },
+  { icon: "💺", label: "Seat Overview", path: "/admin/seat-overview" },
 ];
 
 const Sidebar: React.FC = () => {

@@ -11,7 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -282,4 +284,58 @@ public boolean toggleActiveStatus(Long id) throws TrainException {
     logger.warn("Train not found: {}", id);
     throw new TrainException("Train not found with id : " + id);
 }
+
+    // New admin methods for seat management
+    @Override
+    public List<TrainDetails> getAllActiveTrains() {
+        logger.info("Fetching all active trains");
+        return trainRepository.findByIsActiveTrue();
+    }
+
+    @Override
+    public Map<String, Object> getSeatClassAnalytics(Long trainId, LocalDate date) {
+        logger.info("Fetching seat class analytics for train {} on date {}", trainId, date);
+        
+        Optional<TrainDetails> trainOpt = trainRepository.findById(trainId);
+        if (!trainOpt.isPresent()) {
+            throw new TrainException("Train not found with id: " + trainId);
+        }
+        
+        TrainDetails train = trainOpt.get();
+        Map<String, Object> analytics = new HashMap<>();
+        
+        // Basic train information
+        analytics.put("trainId", train.getTrainId());
+        analytics.put("trainName", train.getTrainName());
+        analytics.put("date", date);
+        
+        // Seat configuration
+        analytics.put("totalSeats", train.getTotalSeats());
+        analytics.put("sleeperSeats", train.getSleeperSeats() != null ? train.getSleeperSeats() : 0);
+        analytics.put("ac2Seats", train.getAc2Seats() != null ? train.getAc2Seats() : 0);
+        analytics.put("ac1Seats", train.getAc1Seats() != null ? train.getAc1Seats() : 0);
+        
+        // Pricing information
+        analytics.put("sleeperPrice", train.getSleeperPrice());
+        analytics.put("ac2Price", train.getAc2Price());
+        analytics.put("ac1Price", train.getAc1Price());
+        
+        // Calculate seat ratios
+        int totalSeats = train.getTotalSeats();
+        if (totalSeats > 0) {
+            analytics.put("sleeperRatio", (double) (train.getSleeperSeats() != null ? train.getSleeperSeats() : 0) / totalSeats * 100);
+            analytics.put("ac2Ratio", (double) (train.getAc2Seats() != null ? train.getAc2Seats() : 0) / totalSeats * 100);
+            analytics.put("ac1Ratio", (double) (train.getAc1Seats() != null ? train.getAc1Seats() : 0) / totalSeats * 100);
+        }
+        
+        // Maximum revenue potential
+        analytics.put("maxSleeperRevenue", train.getSleeperPrice() != null && train.getSleeperSeats() != null ? 
+            train.getSleeperPrice().multiply(java.math.BigDecimal.valueOf(train.getSleeperSeats())) : 0);
+        analytics.put("maxAc2Revenue", train.getAc2Price() != null && train.getAc2Seats() != null ? 
+            train.getAc2Price().multiply(java.math.BigDecimal.valueOf(train.getAc2Seats())) : 0);
+        analytics.put("maxAc1Revenue", train.getAc1Price() != null && train.getAc1Seats() != null ? 
+            train.getAc1Price().multiply(java.math.BigDecimal.valueOf(train.getAc1Seats())) : 0);
+        
+        return analytics;
+    }
 }

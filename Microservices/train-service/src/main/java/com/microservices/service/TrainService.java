@@ -5,6 +5,7 @@ import com.microservices.model.TrainDetails;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public interface TrainService {
     TrainDetails addTrain(TrainDetails train);
@@ -25,4 +26,8 @@ public interface TrainService {
     List<LocalDate> getALlInActiveDates(Long id) throws TrainException;
     boolean toggleActiveStatus(Long trainId) throws TrainException;
     
+    // New methods for admin seat management
+    List<TrainDetails> getAllActiveTrains();
+    Map<String, Object> getSeatClassAnalytics(Long trainId, LocalDate date);
+    String bulkConfigureUnconfiguredTrains(int totalSeats, int sleeperRatio, int ac2Ratio, int ac1Ratio);
 }

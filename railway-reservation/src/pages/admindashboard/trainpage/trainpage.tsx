@@ -4,8 +4,9 @@ import { fetchTrains, addTrain, updateTrain, deleteTrain } from "../../../servic
 import TrainForm from "../../../components/ui/trainform/trainfrom";
 import RoutesModal from "../../../components/ui/trainform/trainroutes";
 import InactiveDatesModal from "../../../components/ui/trainform/trainInActiveDatesModel";
+import SeatConfigModal from "../../../components/admin/SeatConfigModal/SeatConfigModal";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faChevronLeft, faChevronRight, faCog, faEye } from '@fortawesome/free-solid-svg-icons';
 import Alert from '@mui/material/Alert';
 
 const TrainsPage: React.FC = () => {
@@ -28,6 +29,10 @@ const TrainsPage: React.FC = () => {
   // For inactive dates modal
   const [inactiveDatesModalOpen, setInactiveDatesModalOpen] = useState(false);
   const [inactiveDatesTrain, setInactiveDatesTrain] = useState<Train | null>(null);
+
+  // For seat configuration modal
+  const [seatConfigModalOpen, setSeatConfigModalOpen] = useState(false);
+  const [seatConfigTrain, setSeatConfigTrain] = useState<Train | null>(null);
 
   // Alert state
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -330,7 +335,7 @@ const TrainsPage: React.FC = () => {
       </div>
 
       <div className="w-full max-w-7xl mx-auto">
-        <div className="hidden md:grid grid-cols-14 gap-4 px-6 py-3 mb-2 rounded-xl bg-blue-50/60 font-semibold text-blue-900 text-xs">
+        <div className="hidden md:grid grid-cols-15 gap-4 px-6 py-3 mb-2 rounded-xl bg-blue-50/60 font-semibold text-blue-900 text-xs">
           <div>Train ID</div>
           <div>Name</div>
           <div>Source</div>
@@ -344,6 +349,7 @@ const TrainsPage: React.FC = () => {
           <div>Active</div>
           <div>Routes</div>
           <div>Inactive Dates</div>
+          <div>Seat Config</div>
           <div>Actions</div>
         </div>
 
@@ -351,7 +357,7 @@ const TrainsPage: React.FC = () => {
           {paginatedTrains.map((t, idx) => (
             <div
               key={t.trainId ?? idx}
-              className={`grid grid-cols-2 md:grid-cols-14 gap-4 items-center px-4 md:px-6 py-4 rounded-xl backdrop-blur-lg border border-white/40 shadow transition hover:scale-[1.01] text-xs md:text-sm ${
+              className={`grid grid-cols-2 md:grid-cols-15 gap-4 items-center px-4 md:px-6 py-4 rounded-xl backdrop-blur-lg border border-white/40 shadow transition hover:scale-[1.01] text-xs md:text-sm ${
                 t.isActive === false ? 'bg-gray-200/30 opacity-60' : 'bg-white/30'
               }`}
             >
@@ -359,7 +365,14 @@ const TrainsPage: React.FC = () => {
               <div className="text-blue-900">{t.trainName}</div>
               <div className="text-blue-700/90">{t.source}</div>
               <div className="text-blue-700/90">{t.destination}</div>
-              <div>{t.totalSeats}</div>
+              <div>
+                {t.totalSeats}
+                {(t.sleeperSeats || t.ac2Seats || t.ac1Seats) && (
+                  <div className="text-xs text-gray-500">
+                    S:{t.sleeperSeats||0} A2:{t.ac2Seats||0} A1:{t.ac1Seats||0}
+                  </div>
+                )}
+              </div>
               <div>₹{t.amount}</div>
               <div>{t.status}</div>
               <div>{t.departureTime}</div>
@@ -398,6 +411,21 @@ const TrainsPage: React.FC = () => {
                   disabled={loading}
                 >
                   Dates
+                </button>
+              </div>
+              <div>
+                <button
+                  onClick={() => { setSeatConfigTrain(t); setSeatConfigModalOpen(true); }}
+                  className={`px-2 py-1 rounded hover:bg-purple-200 transition text-xs ${
+                    (t.sleeperSeats || t.ac2Seats || t.ac1Seats) 
+                      ? 'bg-purple-100 text-purple-700' 
+                      : 'bg-gray-100 text-gray-600'
+                  }`}
+                  disabled={loading}
+                  title="Configure seat classes and pricing"
+                >
+                  <FontAwesomeIcon icon={faCog} className="mr-1" />
+                  {(t.sleeperSeats || t.ac2Seats || t.ac1Seats) ? 'Configured' : 'Configure'}
                 </button>
               </div>
               <div className="flex gap-2">
@@ -473,6 +501,12 @@ const TrainsPage: React.FC = () => {
         open={inactiveDatesModalOpen}
         inactiveDates={inactiveDatesTrain?.inactiveDates || []}
         onClose={() => { setInactiveDatesModalOpen(false); setInactiveDatesTrain(null); }}
+      />
+      <SeatConfigModal
+        open={seatConfigModalOpen}
+        train={seatConfigTrain}
+        onClose={() => { setSeatConfigModalOpen(false); setSeatConfigTrain(null); }}
+        onUpdate={loadTrains}
       />
 
       {/* Delete Confirmation Modal */}

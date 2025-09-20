@@ -1,6 +1,8 @@
 package com.microservices.controllers;
 
+import com.microservices.dto.SeatConfigurationRequest;
 import com.microservices.dto.SeatConfigurationResponse;
+import com.microservices.dto.TrainSeatOverview;
 import com.microservices.exception.TrainException;
 import com.microservices.model.TrainDetails;
 import com.microservices.service.TrainService;
@@ -16,6 +18,7 @@ import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -256,4 +259,116 @@ public class TrainController {
         }
     }
 
+    // Admin endpoint to bulk update seat configuration with pricing
+    @PutMapping("/{id}/admin/seat-config")
+    public ResponseEntity<?> adminUpdateSeatConfiguration(
+            @PathVariable Long id,
+            @RequestBody @Valid SeatConfigurationRequest request) {
+        try {
+            TrainDetails train = trainService.getTrainById(id);
+            
+            // Update seat counts
+            train.setSleeperSeats(request.getSleeperSeats());
+            train.setAc2Seats(request.getAc2Seats());
+            train.setAc1Seats(request.getAc1Seats());
+            
+            // Update pricing
+            train.setSleeperPrice(request.getSleeperPrice());
+            train.setAc2Price(request.getAc2Price());
+            train.setAc1Price(request.getAc1Price());
+            
+            // Update total seats
+            int totalSeats = request.getSleeperSeats() + request.getAc2Seats() + request.getAc1Seats();
+            train.setTotalSeats(totalSeats);
+            
+            TrainDetails updatedTrain = trainService.updateTrain(id, train);
+            logger.info("Admin updated complete seat configuration for train: {}", id);
+            return ResponseEntity.ok(updatedTrain);
+        } catch (TrainException e) {
+            logger.error("Failed to update seat configuration for train {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error updating seat configuration for train {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    // Admin endpoint to get seat class analytics
+    @GetMapping("/{id}/admin/seat-analytics")
+    public ResponseEntity<?> getSeatClassAnalytics(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        try {
+            Map<String, Object> analytics = trainService.getSeatClassAnalytics(id, date);
+            return ResponseEntity.ok(analytics);
+        } catch (Exception e) {
+            logger.error("Failed to get seat analytics for train {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    // Admin endpoint to reset all seat configuration to default ratios
+    @PutMapping("/{id}/admin/reset-seats")
+    public ResponseEntity<?> resetSeatConfiguration(
+            @PathVariable Long id,
+            @RequestParam Integer totalSeats) {
+        try {
+            TrainDetails train = trainService.getTrainById(id);
+            
+            // Apply default ratios: Sleeper:AC2:AC1 = 50:20:30
+            int sleeperSeats = (int) Math.round(totalSeats * 0.5);
+            int ac2Seats = (int) Math.round(totalSeats * 0.2);
+            int ac1Seats = totalSeats - sleeperSeats - ac2Seats; // Remaining seats for AC1
+            
+            train.setSleeperSeats(sleeperSeats);
+            train.setAc2Seats(ac2Seats);
+            train.setAc1Seats(ac1Seats);
+            train.setTotalSeats(totalSeats);
+            
+            // Set default prices
+            train.setSleeperPrice(new BigDecimal("300"));
+            train.setAc2Price(new BigDecimal("700"));
+            train.setAc1Price(new BigDecimal("1300"));
+            
+            TrainDetails updatedTrain = trainService.updateTrain(id, train);
+            logger.info("Reset seat configuration to defaults for train: {}", id);
+            return ResponseEntity.ok(updatedTrain);
+        } catch (TrainException e) {
+            logger.error("Failed to reset seat configuration for train {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    // Admin endpoint to get all trains with seat configuration
+    @GetMapping("/admin/seat-overview")
+    public ResponseEntity<List<TrainSeatOverview>> getTrainSeatOverview() {
+        try {
+            List<TrainDetails> trains = trainService.getAllActiveTrains();
+            List<TrainSeatOverview> overview = trains.stream()
+                .map(train -> TrainSeatOverview.builder()
+                    .trainId(train.getTrainId())
+                    .trainName(train.getTrainName())
+                    .source(train.getSource())
+                    .destination(train.getDestination())
+                    .totalSeats(train.getTotalSeats())
+                    .sleeperSeats(train.getSleeperSeats())
+                    .ac2Seats(train.getAc2Seats())
+                    .ac1Seats(train.getAc1Seats())
+                    .sleeperPrice(train.getSleeperPrice())
+                    .ac2Price(train.getAc2Price())
+                    .ac1Price(train.getAc1Price())
+                    .isConfigured(train.getSleeperSeats() != null && 
+                                 train.getAc2Seats() != null && 
+                                 train.getAc1Seats() != null)
+                    .build())
+                .toList();
+            return ResponseEntity.ok(overview);
+        } catch (Exception e) {
+            logger.error("Failed to get train seat overview: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 }
+
+

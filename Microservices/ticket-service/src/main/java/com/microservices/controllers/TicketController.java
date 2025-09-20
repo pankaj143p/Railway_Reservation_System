@@ -25,11 +25,11 @@ public class TicketController {
     private static final Logger logger = LoggerFactory.getLogger(TicketController.class);
     private final TicketService ticketService;
 
-    @PostMapping("/book/{train_id}")
-    public ResponseEntity<?> bookTicket(@PathVariable Long train_id, @Valid @RequestBody TicketRequestDTO req) {
+    @PostMapping("/book/{trainId}")
+    public ResponseEntity<Object> bookTicket(@PathVariable Long trainId, @Valid @RequestBody TicketRequestDTO req) {
         try {
-            TicketResponseDTO result = ticketService.bookTicket(train_id, req);
-            logger.info("Ticket booked for train_id: {}", train_id);
+            TicketResponseDTO result = ticketService.bookTicket(trainId, req);
+            logger.info("Ticket booked for trainId: {}", trainId);
             return ResponseEntity.ok(result);
         } catch (TicketException e) {
             logger.error("Booking failed: {}", e.getMessage());
@@ -38,7 +38,7 @@ public class TicketController {
     }
 
     @PutMapping("/cancel/{ticketId}")
-    public ResponseEntity<?> cancelTicket(@PathVariable Long ticketId) {
+    public ResponseEntity<Object> cancelTicket(@PathVariable Long ticketId) {
         try {
             String result = ticketService.cancelTicket(ticketId);
             logger.info("Ticket cancelled: {}", ticketId);
@@ -50,7 +50,7 @@ public class TicketController {
     }
 
     @PutMapping("/cancel-with-refund/{ticketId}")
-    public ResponseEntity<?> cancelTicketWithRefund(@PathVariable Long ticketId) {
+    public ResponseEntity<Object> cancelTicketWithRefund(@PathVariable Long ticketId) {
         try {
             CancellationResponseDTO result = ticketService.cancelTicketWithRefund(ticketId);
             logger.info("Ticket cancelled with refund details: {}", ticketId);
@@ -62,7 +62,7 @@ public class TicketController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateTicket(
+    public ResponseEntity<Object> updateTicket(
             @PathVariable Long id,
             @Valid @RequestBody TicketBooking updatedTicket
     ) {
@@ -77,7 +77,7 @@ public class TicketController {
     }
 
     @GetMapping("/{ticketId}")
-    public ResponseEntity<?> getTicketDetails(@PathVariable Long ticketId){
+    public ResponseEntity<Object> getTicketDetails(@PathVariable Long ticketId){
         try {
             TicketBooking ticket = ticketService.getTicketDetails(ticketId);
             logger.info("Fetched ticket details: {}", ticketId);
@@ -96,7 +96,7 @@ public class TicketController {
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<?> getTicketByOrderId(@PathVariable String orderId) {
+    public ResponseEntity<Object> getTicketByOrderId(@PathVariable String orderId) {
         try {
             TicketBooking ticket = ticketService.getTicketByOrderId(orderId);
             logger.info("Fetched ticket by orderId: {}", orderId);
@@ -108,7 +108,7 @@ public class TicketController {
     }
 
     @GetMapping("/user/{userEmail}")
-    public ResponseEntity<?> getTicketByUserEmail(@PathVariable String userEmail) {
+    public ResponseEntity<Object> getTicketByUserEmail(@PathVariable String userEmail) {
         try {
             List<TicketBooking> tickets = ticketService.getTicketByUserEmail(userEmail);
             logger.info("Fetched tickets for user email: {}", userEmail);
@@ -120,7 +120,7 @@ public class TicketController {
     }
 
     @GetMapping("/availability/{trainId}")
-    public ResponseEntity<?> getAvailableSeats(@PathVariable Long trainId, @RequestParam String date) {
+    public ResponseEntity<Object> getAvailableSeats(@PathVariable Long trainId, @RequestParam String date) {
         try {
             LocalDate localDate = LocalDate.parse(date);
             int bookedSeats = ticketService.getBookedSeatsCountByTrainAndDate(trainId, localDate);
@@ -129,6 +129,70 @@ public class TicketController {
         } catch (Exception e) {
             logger.error("Error fetching seat availability: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error fetching seat availability");
+        }
+    }
+
+    // New endpoints for seat class management
+    @GetMapping("/availability/{trainId}/class/{seatClass}")
+    public ResponseEntity<Object> getAvailableSeatsByClass(
+            @PathVariable Long trainId, 
+            @PathVariable String seatClass,
+            @RequestParam String date) {
+        try {
+            LocalDate localDate = LocalDate.parse(date);
+            int bookedSeats = ticketService.getBookedSeatsCountByClass(trainId, localDate, seatClass);
+            logger.info("Fetched booked seats count for train {} class {} on date {}: {}", trainId, seatClass, date, bookedSeats);
+            return ResponseEntity.ok(bookedSeats);
+        } catch (Exception e) {
+            logger.error("Error fetching seat availability by class: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error fetching seat availability by class");
+        }
+    }
+
+    @GetMapping("/booking-summary/{trainId}")
+    public ResponseEntity<Object> getBookingSummary(@PathVariable Long trainId, @RequestParam String date) {
+        try {
+            LocalDate localDate = LocalDate.parse(date);
+            java.util.Map<String, Object> summary = ticketService.getBookingSummaryByClass(trainId, localDate);
+            logger.info("Fetched booking summary for train {} on date {}", trainId, date);
+            return ResponseEntity.ok(summary);
+        } catch (Exception e) {
+            logger.error("Error fetching booking summary: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error fetching booking summary");
+        }
+    }
+
+    @GetMapping("/revenue/{trainId}")
+    public ResponseEntity<Object> getRevenueByClass(@PathVariable Long trainId, @RequestParam String date) {
+        try {
+            LocalDate localDate = LocalDate.parse(date);
+            java.util.Map<String, Object> revenue = ticketService.getRevenueByClass(trainId, localDate);
+            logger.info("Fetched revenue summary for train {} on date {}", trainId, date);
+            return ResponseEntity.ok(revenue);
+        } catch (Exception e) {
+            logger.error("Error fetching revenue: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error fetching revenue");
+        }
+    }
+
+    @GetMapping("/bookings/{trainId}")
+    public ResponseEntity<Object> getTrainBookings(
+            @PathVariable Long trainId, 
+            @RequestParam String date,
+            @RequestParam(required = false) String seatClass) {
+        try {
+            LocalDate localDate = LocalDate.parse(date);
+            List<TicketBooking> bookings;
+            if (seatClass != null && !seatClass.isEmpty()) {
+                bookings = ticketService.getBookingsByTrainDateAndClass(trainId, localDate, seatClass);
+            } else {
+                bookings = ticketService.getBookingsByTrainAndDate(trainId, localDate);
+            }
+            logger.info("Fetched {} bookings for train {} on date {}", bookings.size(), trainId, date);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            logger.error("Error fetching train bookings: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error fetching train bookings");
         }
     }
 }
