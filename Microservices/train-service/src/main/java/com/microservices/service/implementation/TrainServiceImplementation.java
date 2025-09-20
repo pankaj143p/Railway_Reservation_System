@@ -338,4 +338,54 @@ public boolean toggleActiveStatus(Long id) throws TrainException {
         
         return analytics;
     }
+
+    @Override
+    public String bulkConfigureUnconfiguredTrains(int totalSeats, int sleeperRatio, int ac2Ratio, int ac1Ratio) {
+        logger.info("Bulk configuring unconfigured trains with ratios S:{}% AC2:{}% AC1:{}%", sleeperRatio, ac2Ratio, ac1Ratio);
+        
+        // Find trains that don't have seat configuration
+        List<TrainDetails> unconfiguredTrains = trainRepository.findByIsActiveTrue()
+            .stream()
+            .filter(train -> train.getSleeperSeats() == null || train.getSleeperSeats() == 0)
+            .toList();
+        
+        if (unconfiguredTrains.isEmpty()) {
+            return "No unconfigured trains found";
+        }
+        
+        int configuredCount = 0;
+        for (TrainDetails train : unconfiguredTrains) {
+            try {
+                // Calculate seat distribution
+                int sleeperSeats = (totalSeats * sleeperRatio) / 100;
+                int ac2Seats = (totalSeats * ac2Ratio) / 100;
+                int ac1Seats = (totalSeats * ac1Ratio) / 100;
+                
+                // Adjust for rounding
+                int remaining = totalSeats - (sleeperSeats + ac2Seats + ac1Seats);
+                sleeperSeats += remaining; // Add remaining to sleeper class
+                
+                // Update train configuration
+                train.setTotalSeats(totalSeats);
+                train.setSleeperSeats(sleeperSeats);
+                train.setAc2Seats(ac2Seats);
+                train.setAc1Seats(ac1Seats);
+                
+                // Set default prices
+                train.setSleeperPrice(java.math.BigDecimal.valueOf(300));
+                train.setAc2Price(java.math.BigDecimal.valueOf(700));
+                train.setAc1Price(java.math.BigDecimal.valueOf(1300));
+                
+                trainRepository.save(train);
+                configuredCount++;
+                
+                logger.info("Configured train {} with {} total seats", train.getTrainName(), totalSeats);
+                
+            } catch (Exception e) {
+                logger.error("Failed to configure train {}: {}", train.getTrainName(), e.getMessage());
+            }
+        }
+        
+        return String.format("Successfully configured %d out of %d unconfigured trains", configuredCount, unconfiguredTrains.size());
+    }
 }

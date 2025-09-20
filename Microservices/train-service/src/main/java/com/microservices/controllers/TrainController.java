@@ -369,6 +369,27 @@ public class TrainController {
         }
     }
 
+    @PostMapping("/admin/bulk-configure")
+    public ResponseEntity<String> bulkConfigureUnconfiguredTrains(
+            @RequestParam int totalSeats,
+            @RequestParam int sleeperRatio,
+            @RequestParam int ac2Ratio,
+            @RequestParam int ac1Ratio) {
+        try {
+            if (sleeperRatio + ac2Ratio + ac1Ratio != 100) {
+                return ResponseEntity.badRequest().body("Seat class ratios must sum to 100%");
+            }
+            
+            String result = trainService.bulkConfigureUnconfiguredTrains(totalSeats, sleeperRatio, ac2Ratio, ac1Ratio);
+            logger.info("Bulk configuration result: {}", result);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.error("Failed to bulk configure trains: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to bulk configure trains: " + e.getMessage());
+        }
+    }
+
 }
 
 

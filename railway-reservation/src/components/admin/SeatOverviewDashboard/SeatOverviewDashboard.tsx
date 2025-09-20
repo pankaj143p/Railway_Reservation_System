@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getTrainSeatOverview } from '../../../services/api/trainservice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSync, faChartBar, faCog, faTrainSubway } from '@fortawesome/free-solid-svg-icons';
+import BulkConfigModal from '../BulkConfigModal/BulkConfigModal';
 
 interface TrainSeatOverview {
     trainId: number;
@@ -31,6 +32,7 @@ const SeatOverviewDashboard: React.FC = () => {
     const [sortBy, setSortBy] = useState<keyof TrainSeatOverview>('trainId');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [filterConfigured, setFilterConfigured] = useState<'all' | 'configured' | 'unconfigured'>('all');
+    const [bulkConfigModalOpen, setBulkConfigModalOpen] = useState(false);
 
     useEffect(() => {
         loadOverview();
@@ -135,7 +137,7 @@ const SeatOverviewDashboard: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                     <div>
                         <h1 className="text-3xl font-bold text-blue-900 flex items-center gap-3">
-                            <FontAwesomeIcon icon={faTrainSubway} />
+                            🚆
                             Seat Configuration Overview
                         </h1>
                         <p className="text-blue-700 mt-2">Manage seat classes and pricing across all trains</p>
@@ -145,8 +147,7 @@ const SeatOverviewDashboard: React.FC = () => {
                         disabled={loading}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-2"
                     >
-                        <FontAwesomeIcon icon={faSync} className={loading ? 'animate-spin' : ''} />
-                        Refresh
+                        🔄 {loading ? 'Loading...' : 'Refresh'}
                     </button>
                 </div>
 
@@ -286,7 +287,7 @@ const SeatOverviewDashboard: React.FC = () => {
 
                 {filteredAndSortedData.length === 0 && (
                     <div className="p-8 text-center text-gray-500">
-                        <FontAwesomeIcon icon={faChartBar} className="w-12 h-12 mb-4 opacity-50" />
+                        📊
                         <p>No trains found matching the current filter.</p>
                     </div>
                 )}
@@ -296,9 +297,13 @@ const SeatOverviewDashboard: React.FC = () => {
             <div className="mt-6 p-4 bg-blue-50/70 backdrop-blur-lg rounded-xl border border-white/40">
                 <h3 className="font-medium text-blue-900 mb-3">Quick Actions</h3>
                 <div className="flex flex-wrap gap-3">
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-                        <FontAwesomeIcon icon={faCog} />
-                        Bulk Configure Unconfigured Trains
+                    <button 
+                        onClick={() => alert('Bulk configuration feature coming soon!')}
+                        disabled={statistics.unconfigured === 0}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                        ⚙️
+                        Bulk Configure Unconfigured Trains ({statistics.unconfigured})
                     </button>
                     <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                         Export Configuration Report
@@ -308,6 +313,19 @@ const SeatOverviewDashboard: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Bulk Configuration Modal */}
+            {/*
+            <BulkConfigModal
+                isOpen={bulkConfigModalOpen}
+                onClose={() => setBulkConfigModalOpen(false)}
+                onSuccess={() => {
+                    loadOverview();
+                    setBulkConfigModalOpen(false);
+                }}
+                unconfiguredCount={statistics.unconfigured}
+            />
+            */}
         </div>
     );
 };

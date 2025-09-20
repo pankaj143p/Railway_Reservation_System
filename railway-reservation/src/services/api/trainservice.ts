@@ -135,3 +135,20 @@ export const updatePricing = async (
     return response.data;
 }
 
+export const bulkConfigureUnconfiguredTrains = async (
+    totalSeats: number,
+    sleeperRatio: number,
+    ac2Ratio: number,
+    ac1Ratio: number
+): Promise<string> => {
+    const token = getToken();
+    const response = await axios.post(
+        `${API_URL}/trains/admin/bulk-configure?totalSeats=${totalSeats}&sleeperRatio=${sleeperRatio}&ac2Ratio=${ac2Ratio}&ac1Ratio=${ac1Ratio}`,
+        {},
+        {
+            headers: { Authorization: `Bearer ${token}` }
+        }
+    );
+    return response.data;
+}
+
