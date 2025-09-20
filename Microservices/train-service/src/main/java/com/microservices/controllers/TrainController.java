@@ -1,5 +1,6 @@
 package com.microservices.controllers;
 
+import com.microservices.dto.SeatConfigurationResponse;
 import com.microservices.exception.TrainException;
 import com.microservices.model.TrainDetails;
 import com.microservices.service.TrainService;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -227,22 +229,30 @@ public class TrainController {
 
     // Get seat configuration for a train
     @GetMapping("/{id}/seat-config")
-    public ResponseEntity<?> getSeatConfiguration(@PathVariable Long id) {
+    public ResponseEntity<SeatConfigurationResponse> getSeatConfiguration(@PathVariable Long id) {
         try {
             TrainDetails train = trainService.getTrainById(id);
-            var seatConfig = new Object() {
-                public final Integer sleeperSeats = train.getSleeperSeats();
-                public final Integer ac2Seats = train.getAc2Seats();
-                public final Integer ac1Seats = train.getAc1Seats();
-                public final java.math.BigDecimal sleeperPrice = train.getSleeperPrice();
-                public final java.math.BigDecimal ac2Price = train.getAc2Price();
-                public final java.math.BigDecimal ac1Price = train.getAc1Price();
-                public final Integer totalSeats = train.getTotalSeats();
-            };
+            SeatConfigurationResponse seatConfig = SeatConfigurationResponse.builder()
+                    .trainId(train.getTrainId())
+                    .trainName(train.getTrainName())
+                    .sleeperSeats(train.getSleeperSeats())
+                    .ac2Seats(train.getAc2Seats())
+                    .ac1Seats(train.getAc1Seats())
+                    .totalSeats(train.getTotalSeats())
+                    .sleeperPrice(train.getSleeperPrice())
+                    .ac2Price(train.getAc2Price())
+                    .ac1Price(train.getAc1Price())
+                    .sleeperRangeStart(train.getSeatRangeStart("SLEEPER"))
+                    .sleeperRangeEnd(train.getSeatRangeEnd("SLEEPER"))
+                    .ac2RangeStart(train.getSeatRangeStart("AC2"))
+                    .ac2RangeEnd(train.getSeatRangeEnd("AC2"))
+                    .ac1RangeStart(train.getSeatRangeStart("AC1"))
+                    .ac1RangeEnd(train.getSeatRangeEnd("AC1"))
+                    .build();
             return ResponseEntity.ok(seatConfig);
         } catch (TrainException e) {
             logger.error("Failed to get seat configuration for train {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.notFound().build();
         }
     }
 

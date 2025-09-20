@@ -17,6 +17,26 @@ interface SeatAvailability {
   totalSeats: number;
   status: 'available' | 'full' | 'unavailable' | 'train-not-operational' | 'inactive';
   operationalReason?: string;
+  seatDetails?: {
+    sleeper: {
+      available: number;
+      booked: number;
+      total: number;
+      price: number;
+    };
+    ac2: {
+      available: number;
+      booked: number;
+      total: number;
+      price: number;
+    };
+    ac1: {
+      available: number;
+      booked: number;
+      total: number;
+      price: number;
+    };
+  };
 }
 
 const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect, onClose }) => {
@@ -138,20 +158,43 @@ const Calendar: React.FC<CalendarProps> = ({ trainId, trainDetails, onDateSelect
           };
         } else {
           try {
+            // Use new seat availability endpoint
             const response = await axios.get(
-              `${API_URL}/tickets/availability/${trainId}?date=${dateStr}`
+              `${API_URL}/seats/availability/${trainId}?date=${dateStr}`
             );
             
-            const bookedSeats = response.data;
-            const totalSeats = trainDetails?.totalSeats || 0;
-            const availableSeats = totalSeats - bookedSeats;
+            const seatData = response.data;
+            const totalAvailableSeats = seatData.totalAvailableSeats || 0;
+            const totalBookedSeats = seatData.totalBookedSeats || 0;
+            const totalSeats = seatData.totalSeats || trainDetails?.totalSeats || 0;
             
             availability[dateStr] = {
               date: dateStr,
-              availableSeats,
-              bookedSeats,
-              totalSeats,
-              status: availableSeats <= 0 ? 'full' : 'available'
+              availableSeats: totalAvailableSeats,
+              bookedSeats: totalBookedSeats,
+              totalSeats: totalSeats,
+              status: totalAvailableSeats <= 0 ? 'full' : 'available',
+              // Store detailed seat information for booking
+              seatDetails: {
+                sleeper: {
+                  available: seatData.sleeperAvailableSeats || 0,
+                  booked: seatData.sleeperBookedSeats || 0,
+                  total: seatData.sleeperTotalSeats || 0,
+                  price: seatData.sleeperPrice || 0
+                },
+                ac2: {
+                  available: seatData.ac2AvailableSeats || 0,
+                  booked: seatData.ac2BookedSeats || 0,
+                  total: seatData.ac2TotalSeats || 0,
+                  price: seatData.ac2Price || 0
+                },
+                ac1: {
+                  available: seatData.ac1AvailableSeats || 0,
+                  booked: seatData.ac1BookedSeats || 0,
+                  total: seatData.ac1TotalSeats || 0,
+                  price: seatData.ac1Price || 0
+                }
+              }
             };
           } catch (error) {
             let demoStatus = 'available';
