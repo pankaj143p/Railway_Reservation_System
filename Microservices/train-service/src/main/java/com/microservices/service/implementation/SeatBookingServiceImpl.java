@@ -9,28 +9,24 @@ import com.microservices.model.TrainDetails;
 import com.microservices.repository.SeatBookingRepository;
 import com.microservices.repository.TrainRepository;
 import com.microservices.service.SeatBookingService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class SeatBookingServiceImpl implements SeatBookingService {
 
-    @Autowired
-    private SeatBookingRepository seatBookingRepository;
-
-    @Autowired
-    private TrainRepository trainRepository;
+    private final SeatBookingRepository seatBookingRepository;
+    private final TrainRepository trainRepository;
 
     private static final String SLEEPER = "SLEEPER";
     private static final String AC2 = "AC2";
@@ -46,13 +42,13 @@ public class SeatBookingServiceImpl implements SeatBookingService {
                 .orElseThrow(() -> new TrainException("Train not found with ID: " + request.getTrainId()));
 
         // Check train is operational
-        if (!train.getIsActive() || !"OPERATIONAL".equals(train.getOperationalStatus())) {
+        if (Boolean.FALSE.equals(train.getIsActive()) || !"OPERATIONAL".equals(train.getOperationalStatus())) {
             throw new TrainException("Train is not operational on the selected date");
         }
 
         // Check availability
         SeatAvailabilityResponse availability = getSeatAvailability(request.getTrainId(), request.getBookingDate());
-        if (!availability.hasAvailabilityInClass(request.getSeatClass())) {
+        if (Boolean.FALSE.equals(availability.hasAvailabilityInClass(request.getSeatClass()))) {
             throw new TrainException("No seats available in " + request.getSeatClass() + " class");
         }
 
@@ -70,11 +66,11 @@ public class SeatBookingServiceImpl implements SeatBookingService {
             
             // Use preferred seat if provided and available
             if (request.getPreferredSeatNumber() != null && i == 0) {
-                if (!isSeatAvailable(request.getTrainId(), request.getPreferredSeatNumber(), 
-                                   request.getSeatClass(), request.getBookingDate())) {
+                if (Boolean.FALSE.equals(isSeatAvailable(request.getTrainId(), request.getPreferredSeatNumber(), 
+                                   request.getSeatClass(), request.getBookingDate()))) {
                     throw new TrainException("Preferred seat " + request.getPreferredSeatNumber() + " is not available");
                 }
-                if (!isValidSeatForClass(request.getTrainId(), request.getPreferredSeatNumber(), request.getSeatClass())) {
+                if (Boolean.FALSE.equals(isValidSeatForClass(request.getTrainId(), request.getPreferredSeatNumber(), request.getSeatClass()))) {
                     throw new TrainException("Seat " + request.getPreferredSeatNumber() + " is not valid for " + request.getSeatClass() + " class");
                 }
                 seatNumber = request.getPreferredSeatNumber();

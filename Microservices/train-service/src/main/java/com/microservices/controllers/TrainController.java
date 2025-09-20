@@ -183,4 +183,67 @@ public class TrainController {
         }
     }
 
+    // Update seat configuration for a train
+    @PutMapping("/{id}/seat-config")
+    public ResponseEntity<?> updateSeatConfiguration(
+            @PathVariable Long id,
+            @RequestParam Integer sleeperSeats,
+            @RequestParam Integer ac2Seats,
+            @RequestParam Integer ac1Seats) {
+        try {
+            TrainDetails train = trainService.getTrainById(id);
+            train.setSleeperSeats(sleeperSeats);
+            train.setAc2Seats(ac2Seats);
+            train.setAc1Seats(ac1Seats);
+            TrainDetails updatedTrain = trainService.updateTrain(id, train);
+            logger.info("Updated seat configuration for train: {}", id);
+            return ResponseEntity.ok(updatedTrain);
+        } catch (TrainException e) {
+            logger.error("Failed to update seat configuration for train {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    // Update pricing for a train
+    @PutMapping("/{id}/pricing")
+    public ResponseEntity<?> updatePricing(
+            @PathVariable Long id,
+            @RequestParam java.math.BigDecimal sleeperPrice,
+            @RequestParam java.math.BigDecimal ac2Price,
+            @RequestParam java.math.BigDecimal ac1Price) {
+        try {
+            TrainDetails train = trainService.getTrainById(id);
+            train.setSleeperPrice(sleeperPrice);
+            train.setAc2Price(ac2Price);
+            train.setAc1Price(ac1Price);
+            TrainDetails updatedTrain = trainService.updateTrain(id, train);
+            logger.info("Updated pricing for train: {}", id);
+            return ResponseEntity.ok(updatedTrain);
+        } catch (TrainException e) {
+            logger.error("Failed to update pricing for train {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    // Get seat configuration for a train
+    @GetMapping("/{id}/seat-config")
+    public ResponseEntity<?> getSeatConfiguration(@PathVariable Long id) {
+        try {
+            TrainDetails train = trainService.getTrainById(id);
+            var seatConfig = new Object() {
+                public final Integer sleeperSeats = train.getSleeperSeats();
+                public final Integer ac2Seats = train.getAc2Seats();
+                public final Integer ac1Seats = train.getAc1Seats();
+                public final java.math.BigDecimal sleeperPrice = train.getSleeperPrice();
+                public final java.math.BigDecimal ac2Price = train.getAc2Price();
+                public final java.math.BigDecimal ac1Price = train.getAc1Price();
+                public final Integer totalSeats = train.getTotalSeats();
+            };
+            return ResponseEntity.ok(seatConfig);
+        } catch (TrainException e) {
+            logger.error("Failed to get seat configuration for train {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
 }
