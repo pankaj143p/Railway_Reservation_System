@@ -1,5 +1,7 @@
 package com.microservices.service;
 
+import com.microservices.dto.SeatAvailabilityDTO;
+import com.microservices.dto.TrainSearchDTO;
 import com.microservices.exception.TrainException;
 import com.microservices.model.TrainDetails;
 
@@ -26,7 +28,13 @@ public interface TrainService {
     List<LocalDate> getALlInActiveDates(Long id) throws TrainException;
     boolean toggleActiveStatus(Long trainId) throws TrainException;
     
-    // New methods for admin seat management
+    // New methods for IRCTC-like features
+    List<TrainSearchDTO> searchTrainsWithAvailability(String source, String destination, LocalDate date);
+    List<SeatAvailabilityDTO> getSeatAvailabilityByClass(Long trainId, LocalDate date);
+    List<Integer> getAvailableSeats(Long trainId, String seatClass, LocalDate date);
+    boolean bookSeat(Long trainId, String seatClass, Integer seatNumber, LocalDate date, String passengerName, String passengerEmail);
+    
+    // Admin seat management
     List<TrainDetails> getAllActiveTrains();
     Map<String, Object> getSeatClassAnalytics(Long trainId, LocalDate date);
     String bulkConfigureUnconfiguredTrains(int totalSeats, int sleeperRatio, int ac2Ratio, int ac1Ratio);

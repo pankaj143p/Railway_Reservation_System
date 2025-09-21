@@ -28,6 +28,27 @@ export interface Train {
   ac1Price?: number; // Price for AC 1-tier class (₹1300 base)
 }
 
+export interface SeatAvailability {
+  seatClass: string;
+  availableSeats: number;
+  totalSeats: number;
+  price: number;
+  seatRangeStart: number;
+  seatRangeEnd: number;
+}
+
+export interface TrainSearchResult {
+  trainId: number;
+  trainName: string;
+  source: string;
+  destination: string;
+  departureTime: string;
+  arrivalTime: string;
+  seatAvailability: SeatAvailability[];
+  searchDate: string;
+  operationalStatus: string;
+}
+
 export interface SeatClassConfig {
   sleeperSeats: number;
   ac2Seats: number;

@@ -388,4 +388,143 @@ public boolean toggleActiveStatus(Long id) throws TrainException {
         
         return String.format("Successfully configured %d out of %d unconfigured trains", configuredCount, unconfiguredTrains.size());
     }
+
+    // IRCTC-like search with availability
+    @Override
+    public List<com.microservices.dto.TrainSearchDTO> searchTrainsWithAvailability(String source, String destination, LocalDate date) {
+        logger.info("Searching trains with availability from {} to {} on {}", source, destination, date);
+        
+        List<TrainDetails> trains = trainRepository.findBySourceContainingIgnoreCaseAndDestinationContainingIgnoreCase(source, destination);
+        
+        return trains.stream()
+            .filter(train -> train.getIsActive() && "OPERATIONAL".equals(train.getOperationalStatus()))
+            .map(train -> {
+                com.microservices.dto.TrainSearchDTO searchResult = new com.microservices.dto.TrainSearchDTO();
+                searchResult.setTrainId(train.getTrainId());
+                searchResult.setTrainName(train.getTrainName());
+                searchResult.setSource(train.getSource());
+                searchResult.setDestination(train.getDestination());
+                searchResult.setDepartureTime(train.getDepartureTime());
+                searchResult.setArrivalTime(train.getArrivalTime());
+                searchResult.setSearchDate(date);
+                searchResult.setOperationalStatus(train.getOperationalStatus());
+                searchResult.setSeatAvailability(getSeatAvailabilityByClass(train.getTrainId(), date));
+                return searchResult;
+            })
+            .toList();
+    }
+
+    @Override
+    public List<com.microservices.dto.SeatAvailabilityDTO> getSeatAvailabilityByClass(Long trainId, LocalDate date) {
+        logger.info("Getting seat availability by class for train {} on {}", trainId, date);
+        
+        Optional<TrainDetails> trainOpt = trainRepository.findById(trainId);
+        if (!trainOpt.isPresent()) {
+            throw new TrainException("Train not found with id: " + trainId);
+        }
+        
+        TrainDetails train = trainOpt.get();
+        List<com.microservices.dto.SeatAvailabilityDTO> availability = new java.util.ArrayList<>();
+        
+        // Get booked seats for this date (you'll need to implement this based on your booking system)
+        // For now, using mock data
+        int bookedSleeper = getBookedSeatsCount(trainId, "SLEEPER", date);
+        int bookedAc2 = getBookedSeatsCount(trainId, "AC2", date);
+        int bookedAc1 = getBookedSeatsCount(trainId, "AC1", date);
+        
+        // Sleeper class
+        if (train.getSleeperSeats() != null && train.getSleeperSeats() > 0) {
+            com.microservices.dto.SeatAvailabilityDTO sleeper = new com.microservices.dto.SeatAvailabilityDTO();
+            sleeper.setSeatClass("SLEEPER");
+            sleeper.setTotalSeats(train.getSleeperSeats());
+            sleeper.setAvailableSeats(train.getSleeperSeats() - bookedSleeper);
+            sleeper.setPrice(train.getSleeperPrice());
+            sleeper.setSeatRangeStart(train.getSeatRangeStart("SLEEPER"));
+            sleeper.setSeatRangeEnd(train.getSeatRangeEnd("SLEEPER"));
+            availability.add(sleeper);
+        }
+        
+        // AC2 class
+        if (train.getAc2Seats() != null && train.getAc2Seats() > 0) {
+            com.microservices.dto.SeatAvailabilityDTO ac2 = new com.microservices.dto.SeatAvailabilityDTO();
+            ac2.setSeatClass("AC2");
+            ac2.setTotalSeats(train.getAc2Seats());
+            ac2.setAvailableSeats(train.getAc2Seats() - bookedAc2);
+            ac2.setPrice(train.getAc2Price());
+            ac2.setSeatRangeStart(train.getSeatRangeStart("AC2"));
+            ac2.setSeatRangeEnd(train.getSeatRangeEnd("AC2"));
+            availability.add(ac2);
+        }
+        
+        // AC1 class
+        if (train.getAc1Seats() != null && train.getAc1Seats() > 0) {
+            com.microservices.dto.SeatAvailabilityDTO ac1 = new com.microservices.dto.SeatAvailabilityDTO();
+            ac1.setSeatClass("AC1");
+            ac1.setTotalSeats(train.getAc1Seats());
+            ac1.setAvailableSeats(train.getAc1Seats() - bookedAc1);
+            ac1.setPrice(train.getAc1Price());
+            ac1.setSeatRangeStart(train.getSeatRangeStart("AC1"));
+            ac1.setSeatRangeEnd(train.getSeatRangeEnd("AC1"));
+            availability.add(ac1);
+        }
+        
+        return availability;
+    }
+
+    @Override
+    public List<Integer> getAvailableSeats(Long trainId, String seatClass, LocalDate date) {
+        logger.info("Getting available seat numbers for train {} class {} on {}", trainId, seatClass, date);
+        
+        Optional<TrainDetails> trainOpt = trainRepository.findById(trainId);
+        if (!trainOpt.isPresent()) {
+            throw new TrainException("Train not found with id: " + trainId);
+        }
+        
+        TrainDetails train = trainOpt.get();
+        List<Integer> availableSeats = new java.util.ArrayList<>();
+        
+        int startSeat = train.getSeatRangeStart(seatClass);
+        int endSeat = train.getSeatRangeEnd(seatClass);
+        
+        // Get booked seats for this class and date
+        List<Integer> bookedSeats = getBookedSeatNumbers(trainId, seatClass, date);
+        
+        // Generate available seat list
+        for (int seatNum = startSeat; seatNum <= endSeat; seatNum++) {
+            if (!bookedSeats.contains(seatNum)) {
+                availableSeats.add(seatNum);
+            }
+        }
+        
+        return availableSeats;
+    }
+
+    @Override
+    public boolean bookSeat(Long trainId, String seatClass, Integer seatNumber, LocalDate date, String passengerName, String passengerEmail) {
+        logger.info("Booking seat {} in class {} for train {} on {}", seatNumber, seatClass, trainId, date);
+        
+        // This would integrate with your seat booking service
+        // For now, returning true as a placeholder
+        return true;
+    }
+    
+    // Helper methods for seat booking integration
+    private int getBookedSeatsCount(Long trainId, String seatClass, LocalDate date) {
+        // This should integrate with your seat booking service
+        // For demo purposes, returning random numbers
+        return (int) (Math.random() * 10);
+    }
+    
+    private List<Integer> getBookedSeatNumbers(Long trainId, String seatClass, LocalDate date) {
+        // This should integrate with your seat booking service
+        // For demo purposes, returning some random booked seats
+        List<Integer> bookedSeats = new java.util.ArrayList<>();
+        // Add some random booked seats for demo
+        if (Math.random() > 0.5) {
+            bookedSeats.add(1);
+            bookedSeats.add(5);
+            bookedSeats.add(10);
+        }
+        return bookedSeats;
+    }
 }

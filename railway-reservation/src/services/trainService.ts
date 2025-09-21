@@ -427,4 +427,67 @@ export const cancelTicket = async (ticketId: number): Promise<{ success: boolean
   }
 };
 
+// New IRCTC-like search function
+export const searchTrainsWithAvailability = async (source: string, destination: string, date: string) => {
+  try {
+    const response = await fetch(`${TRAIN_SERVICE_URL}/trains/search/advanced?source=${source}&destination=${destination}&date=${date}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error searching trains with availability:", error);
+    throw error;
+  }
+};
+
+// Get seat availability by class
+export const getSeatAvailabilityByClass = async (trainId: number, date: string) => {
+  try {
+    const response = await fetch(`${TRAIN_SERVICE_URL}/trains/${trainId}/seats/${date}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error getting seat availability:", error);
+    throw error;
+  }
+};
+
+// Get available seat numbers for a class
+export const getAvailableSeatNumbers = async (trainId: number, seatClass: string, date: string) => {
+  try {
+    const response = await fetch(`${TRAIN_SERVICE_URL}/trains/${trainId}/available-seats?seatClass=${seatClass}&date=${date}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error getting available seat numbers:", error);
+    throw error;
+  }
+};
+
 export default submitTicketForm;

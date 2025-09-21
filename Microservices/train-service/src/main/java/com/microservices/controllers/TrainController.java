@@ -390,6 +390,51 @@ public class TrainController {
         }
     }
 
+    // IRCTC-like search with class-wise availability
+    @GetMapping("/search/advanced")
+    public ResponseEntity<?> searchTrainsWithAvailability(
+            @RequestParam String source,
+            @RequestParam String destination,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        try {
+            List<com.microservices.dto.TrainSearchDTO> trains = trainService.searchTrainsWithAvailability(source, destination, date);
+            logger.info("Advanced search from {} to {} on {}, found {} trains", source, destination, date, trains.size());
+            return ResponseEntity.ok(trains);
+        } catch (Exception e) {
+            logger.error("Advanced search failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    // Get seat availability by class for a specific train and date
+    @GetMapping("/{trainId}/seats/{date}")
+    public ResponseEntity<?> getSeatAvailability(
+            @PathVariable Long trainId,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        try {
+            List<com.microservices.dto.SeatAvailabilityDTO> availability = trainService.getSeatAvailabilityByClass(trainId, date);
+            return ResponseEntity.ok(availability);
+        } catch (Exception e) {
+            logger.error("Failed to get seat availability for train {} on {}: {}", trainId, date, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    // Get available seat numbers for a specific class
+    @GetMapping("/{trainId}/available-seats")
+    public ResponseEntity<?> getAvailableSeats(
+            @PathVariable Long trainId,
+            @RequestParam String seatClass,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        try {
+            List<Integer> availableSeats = trainService.getAvailableSeats(trainId, seatClass, date);
+            return ResponseEntity.ok(availableSeats);
+        } catch (Exception e) {
+            logger.error("Failed to get available seats for train {} class {} on {}: {}", trainId, seatClass, date, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
 }
 
 

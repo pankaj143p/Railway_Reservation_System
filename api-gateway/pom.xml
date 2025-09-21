@@ -88,6 +88,12 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
         </dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-resolver-dns-native-macos</artifactId>
+			<version>4.1.109.Final</version>
+			<scope>runtime</scope>
+		</dependency>
 
     </dependencies>
 

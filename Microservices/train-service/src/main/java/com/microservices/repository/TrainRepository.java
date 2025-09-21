@@ -12,6 +12,7 @@ public interface TrainRepository extends JpaRepository<TrainDetails, Long> {
     List<TrainDetails> findBytrainNameStartingWithIgnoreCase(String keyword);
     List<TrainDetails> findBydepartureTime(LocalDate date);
     List<TrainDetails> findBySourceAndDestination(String source, String destination);
+    List<TrainDetails> findBySourceContainingIgnoreCaseAndDestinationContainingIgnoreCase(String source, String destination);
     List<TrainDetails> findByIsActiveTrue();
     List<TrainDetails> findByIsActiveFalse();
     
