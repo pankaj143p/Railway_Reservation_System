@@ -21,9 +21,6 @@ import Policy from './pages/policyPage/policy';
 import Chatbot from './components/bot/Chatbot';
 import ForgotPassword from './pages/forgotpasswordpagee/forgotpassword';
 import ResetPasswordPage from './pages/forgotpasswordpagee/resetpassword';
-import SeatOverviewDashboard from './components/admin/SeatOverviewDashboard/SeatOverviewDashboard';
-import SimpleSeatOverview from './components/admin/SimpleSeatOverview';
-import SearchTrain from './pages/SearchTrain';
 
 function App() {
   const isLoggedIn = !!localStorage.getItem("token");
@@ -65,9 +62,6 @@ function App() {
             element={!isLoggedIn ? <HomePage /> : <Navigate to="/" replace />}
           />
           <Route path='/tickets' element={<TicketPage />} />
-          <Route path='/admin/seat-overview' element={<SeatOverviewDashboard />} />
-          <Route path='/admin/simple-overview' element={<SimpleSeatOverview />} />
-          <Route path='/search-trains' element={<SearchTrain />} />
           
           {/* Static Pages */}
           <Route path='/about' element={<About />} />

@@ -12,10 +12,7 @@ public interface TrainRepository extends JpaRepository<TrainDetails, Long> {
     List<TrainDetails> findBytrainNameStartingWithIgnoreCase(String keyword);
     List<TrainDetails> findBydepartureTime(LocalDate date);
     List<TrainDetails> findBySourceAndDestination(String source, String destination);
-    List<TrainDetails> findBySourceContainingIgnoreCaseAndDestinationContainingIgnoreCase(String source, String destination);
-    List<TrainDetails> findByIsActiveTrue();
-    List<TrainDetails> findByIsActiveFalse();
-    
     @Query("SELECT i FROM TrainDetails t JOIN t.inactiveDates i WHERE t.trainId = :trainId")
     List<LocalDate> getALlInActiveDates(@Param("trainId") Long trainId);
+
 }

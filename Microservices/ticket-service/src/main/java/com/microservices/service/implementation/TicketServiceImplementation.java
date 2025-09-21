@@ -25,9 +25,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -43,7 +41,7 @@ public class TicketServiceImplementation implements TicketService {
 
     @Override
     @Transactional
-    public TicketResponseDTO bookTicket(Long trainId, @Valid TicketRequestDTO request) {
+    public TicketResponseDTO bookTicket(Long train_id, @Valid TicketRequestDTO request) {
         String paymentId = request.getPaymentId();
         String razorpaySign = request.getRazorpaySignature();
         String orderId = request.getOrderId();
@@ -63,7 +61,7 @@ public class TicketServiceImplementation implements TicketService {
         }
 
         // 3. Fetch train details
-        TrainDTO train = trainClient.getTrainById(trainId);
+        TrainDTO train = trainClient.getTrainById(train_id);
 
         // 4. Book the ticket
         TicketBooking ticket = new TicketBooking();
@@ -73,7 +71,7 @@ public class TicketServiceImplementation implements TicketService {
         ticket.setEmail(request.getEmail());
         ticket.setBookingDate(request.getDate());
         ticket.setTicketNumber(methods.generateTicketNumber());
-        ticket.setTrainId(trainId);
+        ticket.setTrainId(train_id);
         ticket.setUserEmail(request.getUserEmail());
         ticket.setTrainName(train.getTrainName());
         ticket.setSource(train.getSource());
@@ -300,14 +298,14 @@ public class TicketServiceImplementation implements TicketService {
     }
 
     @Override
-    public TicketBooking getTicketDetails(Long ticketId) {
-        Optional<TicketBooking> otp = ticketRepository.findById(ticketId);
+    public TicketBooking getTicketDetails(Long ticket_id) {
+        Optional<TicketBooking> otp = ticketRepository.findById(ticket_id);
         if (otp.isPresent()) {
-            logger.info("Fetched ticket details for id: {}", ticketId);
+            logger.info("Fetched ticket details for id: {}", ticket_id);
             return otp.get();
         }
-        logger.warn("Ticket not found: {}", ticketId);
-        throw new TicketException("Ticket with " + ticketId + " not present!");
+        logger.warn("Ticket not found: {}", ticket_id);
+        throw new TicketException("Ticket with " + ticket_id + " not present!");
     }
 
     @Override
@@ -352,84 +350,6 @@ public class TicketServiceImplementation implements TicketService {
         logger.info("Fetching booked seats count for train {} on date {}", trainId, date);
         Integer bookedSeats = ticketRepository.getBookedSeatsCountByTrainAndDate(trainId, date);
         return bookedSeats != null ? bookedSeats : 0;
-    }
-
-    // 12. Get booked seats count by class
-    @Override
-    public int getBookedSeatsCountByClass(Long trainId, LocalDate date, String seatClass) {
-        logger.info("Fetching booked seats count for train {} on date {} for class {}", trainId, date, seatClass);
-        Integer bookedSeats = ticketRepository.getBookedSeatsCountByTrainDateAndClass(trainId, date, seatClass);
-        return bookedSeats != null ? bookedSeats : 0;
-    }
-
-    // 13. Get booking summary by class
-    @Override
-    public Map<String, Object> getBookingSummaryByClass(Long trainId, LocalDate date) {
-        logger.info("Fetching booking summary for train {} on date {}", trainId, date);
-        List<Object[]> summaryData = ticketRepository.getSeatClassWiseBookingSummary(trainId, date);
-        
-        Map<String, Object> summary = new HashMap<>();
-        Map<String, Integer> classCounts = new HashMap<>();
-        Map<String, Double> classRevenues = new HashMap<>();
-        
-        int totalBookings = 0;
-        double totalRevenue = 0.0;
-        
-        for (Object[] row : summaryData) {
-            String seatClass = (String) row[0];
-            Long count = (Long) row[1];
-            Double revenue = (Double) row[2];
-            
-            classCounts.put(seatClass, count.intValue());
-            classRevenues.put(seatClass, revenue);
-            totalBookings += count.intValue();
-            totalRevenue += revenue;
-        }
-        
-        summary.put("classCounts", classCounts);
-        summary.put("classRevenues", classRevenues);
-        summary.put("totalBookings", totalBookings);
-        summary.put("totalRevenue", totalRevenue);
-        
-        return summary;
-    }
-
-    // 14. Get revenue by class
-    @Override
-    public Map<String, Object> getRevenueByClass(Long trainId, LocalDate date) {
-        logger.info("Fetching revenue by class for train {} on date {}", trainId, date);
-        List<Object[]> revenueData = ticketRepository.getRevenueByClass(trainId, date);
-        
-        Map<String, Object> revenueMap = new HashMap<>();
-        Map<String, Double> classWiseRevenue = new HashMap<>();
-        double totalRevenue = 0.0;
-        
-        for (Object[] row : revenueData) {
-            String seatClass = (String) row[0];
-            Double revenue = (Double) row[1];
-            
-            classWiseRevenue.put(seatClass, revenue);
-            totalRevenue += revenue;
-        }
-        
-        revenueMap.put("classWiseRevenue", classWiseRevenue);
-        revenueMap.put("totalRevenue", totalRevenue);
-        
-        return revenueMap;
-    }
-
-    // 15. Get bookings by train, date and class
-    @Override
-    public List<TicketBooking> getBookingsByTrainDateAndClass(Long trainId, LocalDate date, String seatClass) {
-        logger.info("Fetching bookings for train {} on date {} for class {}", trainId, date, seatClass);
-        return ticketRepository.findByTrainIdAndBookingDateAndSeatClassAndStatus(trainId, date, seatClass, TicketStatus.CONFIRMED);
-    }
-
-    // 16. Get bookings by train and date
-    @Override
-    public List<TicketBooking> getBookingsByTrainAndDate(Long trainId, LocalDate date) {
-        logger.info("Fetching bookings for train {} on date {}", trainId, date);
-        return ticketRepository.findByTrainIdAndBookingDateAndStatus(trainId, date, TicketStatus.CONFIRMED);
     }
 
 }

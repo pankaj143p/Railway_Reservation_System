@@ -88,9 +88,8 @@
 
 
 import { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import TicketConfirm from '../../components/booking/bookingConform';
-import SeatBooking from '../../components/booking/SeatBooking';
 import { Train } from '../../interfaces/Train';
 import { fetchTrainList } from '../../services/trainService';
 
@@ -98,10 +97,6 @@ const Book = () => {
   const { trainId } = useParams<{ trainId: string }>();
   const [selectedTrain, setSelectedTrain] = useState<Train | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [showSeatBooking, setShowSeatBooking] = useState(false);
-  const [searchParams] = useSearchParams();
-  const dateParam = searchParams.get('date');
-  const [selectedDate, setSelectedDate] = useState<string>(dateParam || new Date().toISOString().split('T')[0]); // Default to today, or get from search params if needed
 
   useEffect(() => {
     const loadTrainDetails = async () => {
@@ -128,13 +123,7 @@ const Book = () => {
       ...formData,
       trainId: parseInt(trainId!)
     };
-    // Sanitize data before logging to prevent log injection
-    const sanitizedData = {
-      ...bookingData,
-      fullName: bookingData.fullName?.replace(/[\r\n]/g, ''),
-      email: bookingData.email?.replace(/[\r\n]/g, '')
-    };
-    console.log('Booking Data:', JSON.stringify(sanitizedData));
+    console.log('Booking Data:', bookingData);
   };
 
   if (loading) {
@@ -245,13 +234,7 @@ const Book = () => {
             </div>
             <h3 className="text-2xl font-bold text-gray-800">Passenger Details</h3>
           </div>
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mb-4"
-            onClick={() => setShowSeatBooking(true)}
-          >
-            Book Class-wise Seat
-          </button>
-          {/* Optionally keep the old form for fallback: <TicketConfirm onSubmit={handleSubmit} /> */}
+          <TicketConfirm onSubmit={handleSubmit} />
         </div>
 
         {/* Trust Indicators */}
@@ -269,15 +252,6 @@ const Book = () => {
           ))}
         </div>
       </div>
-      {showSeatBooking && selectedTrain && (
-        <SeatBooking
-          trainId={selectedTrain.trainId.toString()}
-          trainDetails={selectedTrain}
-          selectedDate={selectedDate}
-          onBookingComplete={() => setShowSeatBooking(false)}
-          onClose={() => setShowSeatBooking(false)}
-        />
-      )}
     </div>
   );
 }
