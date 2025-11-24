@@ -6,6 +6,7 @@ interface ToastState {
   type: 'success' | 'error' | 'warning' | 'info';
 }
 
+// Custom hook for toast notifications
 export const useToast = () => {
   const [toast, setToast] = useState<ToastState>({
     show: false,
